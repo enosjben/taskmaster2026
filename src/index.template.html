@@ -1,0 +1,1133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taskmaster — Party Scoreboard</title>
+<style>
+/* Fonts are inlined as data URIs by build.py — the artifact CSP blocks font
+   CDNs, and a silent fallback would lose the whole look. Both are SIL OFL. */
+@font-face{
+  font-family:"Bevan";
+  font-style:normal; font-weight:400; font-display:block;
+  src:url(data:font/woff2;base64,__BEVAN_400__) format("woff2");
+}
+@font-face{
+  font-family:"Courier Prime";
+  font-style:normal; font-weight:400; font-display:block;
+  src:url(data:font/woff2;base64,__COURIER_400__) format("woff2");
+}
+@font-face{
+  font-family:"Courier Prime";
+  font-style:normal; font-weight:700; font-display:block;
+  src:url(data:font/woff2;base64,__COURIER_700__) format("woff2");
+}
+
+/* ─────────────────────────────────────────────────────────────
+   A task envelope on the Taskmaster's desk. Committed to a single
+   light world on purpose: this is a printed sheet under a lamp,
+   not a UI that should invert. Colour is reserved for the five
+   teams and the wax — nothing else on the page is coloured.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --desk:       #6B4526;
+  --desk-deep:  #35200F;
+  --paper:      #F4EFE3;
+  --paper-warm: #EDE6D6;
+  --paper-edge: #DCD3BE;
+  --ink:        #1A1714;
+  --ink-soft:   #4A4238;
+  --pencil:     #8B8071;
+  --rule:       #C7BCA4;
+  --rule-soft:  #DFD6C2;
+  --wax:        #B4241C;
+  --wax-hi:     #D8483C;
+  --wax-lo:     #7C120D;
+
+  --red-tab:    #D23A2E;  --red-ink:    #A82A20;
+  --yel-tab:    #EFC01E;  --yel-ink:    #8A6408;
+  --grn-tab:    #4C9A45;  --grn-ink:    #37702F;
+  --blu-tab:    #3A72BC;  --blu-ink:    #2B5391;
+  --pur-tab:    #8C55A8;  --pur-ink:    #6A3D85;
+
+  --slab: "Bevan", Rockwell, Clarendon, "Bookman Old Style", Georgia, serif;
+  --type: "Courier Prime", "Courier New", ui-monospace, monospace;
+
+  --gap: clamp(12px, 1.4vw, 22px);
+}
+
+*{ box-sizing:border-box; }
+
+html{ background:var(--desk-deep); }
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--type);
+  color:var(--ink);
+  /* Lamp-lit desk: warm pool of light, dark corners, faint grain. */
+  background:
+    repeating-linear-gradient(94deg, rgba(0,0,0,.05) 0 2px, rgba(255,255,255,.02) 2px 5px, rgba(0,0,0,0) 5px 11px),
+    radial-gradient(120% 70% at 50% -5%, rgba(255,214,150,.30) 0%, rgba(255,214,150,0) 60%),
+    radial-gradient(90% 80% at 50% 40%, #7A5230 0%, #4E3018 60%, #2C1A0C 100%),
+    var(--desk);
+  -webkit-font-smoothing:antialiased;
+  padding:clamp(12px, 2.4vw, 44px);
+}
+
+/* ── The sheet ────────────────────────────────────────────── */
+.sheet{
+  max-width:1500px;
+  margin:0 auto;
+  background:
+    radial-gradient(80% 40% at 20% 0%, rgba(255,255,255,.5), rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper) 70%, var(--paper-warm) 100%);
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.35) inset,
+    0 24px 60px -18px rgba(0,0,0,.62),
+    0 4px 12px rgba(0,0,0,.34);
+  padding:clamp(18px, 2.6vw, 40px) clamp(16px, 2.8vw, 46px) clamp(28px, 3vw, 48px);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(20px, 2.6vw, 38px);
+}
+
+/* ── Envelope masthead ────────────────────────────────────── */
+.envelope{
+  position:relative;
+  border:1px solid var(--paper-edge);
+  background:linear-gradient(180deg, #FBF7EE 0%, #F1EADC 100%);
+  box-shadow:0 1px 3px rgba(0,0,0,.09);
+  /* the deep bottom padding is the envelope flap: it keeps the credits
+     clear of the crease and gives the wax somewhere to sit */
+  padding:clamp(20px, 3vw, 38px) clamp(16px, 3vw, 40px) clamp(74px, 8vw, 116px);
+  text-align:center;
+}
+/* the flap crease the wax seal sits on */
+.envelope::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  bottom:clamp(28px, 3.4vw, 44px);
+  border-top:1px solid var(--paper-edge);
+  box-shadow:0 1px 0 rgba(255,255,255,.85);
+}
+
+h1{
+  margin:0;
+  font-family:var(--slab);
+  font-weight:400;
+  font-size:clamp(34px, 7.4vw, 104px);
+  line-height:1;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  color:var(--ink);
+  text-wrap:balance;
+  /* letterpress bite */
+  text-shadow:0 1px 0 rgba(255,255,255,.6), 0 -1px 0 rgba(0,0,0,.12);
+}
+h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
+
+.tagline{
+  margin:clamp(10px, 1.4vw, 16px) 0 0;
+  font-family:var(--type);
+  font-size:clamp(10px, 1.05vw, 13px);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+.tagline b{ color:var(--ink-soft); font-weight:700; }
+
+.credits{
+  margin:clamp(8px, 1vw, 12px) 0 0;
+  display:flex;
+  gap:clamp(14px, 2.4vw, 34px);
+  justify-content:center;
+  flex-wrap:wrap;
+  font-size:clamp(10px, 1vw, 12.5px);
+  color:var(--ink-soft);
+}
+.credit{ display:inline-flex; align-items:baseline; gap:8px; }
+.credit em{
+  font-style:normal;
+  font-weight:700;
+  font-size:9px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+.credit span{
+  min-width:7ch;
+  border-bottom:1px dotted var(--rule);
+  padding:0 2px 1px;
+}
+.credit span.is-empty::before{ content:"name"; color:var(--pencil); opacity:.6; }
+.credit span:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
+
+/* ── Wax seal ─────────────────────────────────────────────── */
+.wax{
+  position:absolute;
+  left:50%;
+  bottom:clamp(28px, 3.4vw, 44px);
+  width:clamp(66px, 7.4vw, 104px);
+  height:clamp(66px, 7.4vw, 104px);
+  transform:translate(-50%, 50%) rotate(-3deg);
+  display:grid;
+  place-items:center;
+  /* pressed wax, not a bauble: flat centre, thickened irregular rim */
+  border-radius:46% 54% 47% 53% / 52% 46% 54% 48%;
+  background:
+    radial-gradient(72% 72% at 50% 46%, #C22C22 0%, #B4241C 58%, rgba(180,36,28,0) 72%),
+    radial-gradient(100% 100% at 50% 50%, rgba(140,22,16,0) 52%, #9B1B14 78%, #7C120D 100%),
+    var(--wax);
+  box-shadow:
+    0 4px 9px rgba(0,0,0,.34),
+    0 1px 2px rgba(0,0,0,.28),
+    inset 0 2px 5px rgba(255,150,140,.28),
+    inset 0 -4px 9px rgba(96,12,8,.45);
+  z-index:2;
+}
+.wax span{
+  font-family:var(--slab);
+  font-size:clamp(20px, 2.3vw, 32px);
+  letter-spacing:.02em;
+  color:#7A130E;
+  /* embossed: light catches the top edge, shadow falls below */
+  text-shadow:0 -1px 0 rgba(72,6,3,.75), 0 1px 0 rgba(255,158,146,.5);
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.controls{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.btn{
+  appearance:none;
+  background:transparent;
+  border:1px solid var(--rule);
+  border-radius:1px;
+  color:var(--ink-soft);
+  font-family:var(--type);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  padding:9px 16px;
+  cursor:pointer;
+  transition:color .16s, border-color .16s, background-color .16s;
+  white-space:nowrap;
+}
+.btn:hover{ color:var(--ink); border-color:var(--ink-soft); background:rgba(0,0,0,.04); }
+.btn:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
+.btn.danger:hover{ color:var(--wax); border-color:var(--wax); background:rgba(180,36,28,.07); }
+
+/* ── Standings: five filing cards ─────────────────────────── */
+.standings{
+  display:flex;
+  gap:var(--gap);
+  align-items:stretch;
+}
+
+.card{
+  flex:1 1 0;
+  min-width:0;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:clamp(12px, 1.4vw, 20px);
+  background:linear-gradient(180deg, #FCFAF4 0%, #F3EDE0 100%);
+  border:1px solid var(--paper-edge);
+  border-top:5px solid var(--tab);
+  box-shadow:0 1px 3px rgba(0,0,0,.13);
+  will-change:transform;
+}
+.card.lead{
+  box-shadow:0 3px 14px rgba(0,0,0,.22);
+  border-color:var(--pencil);
+}
+
+.card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:clamp(28px, 3vw, 40px);
+}
+
+.rank{
+  font-family:var(--slab);
+  font-size:clamp(13px, 1.3vw, 18px);
+  color:var(--pencil);
+  letter-spacing:.04em;
+}
+.card.lead .rank{ color:var(--ink); }
+
+/* the golden head goes to whoever is winning */
+.trophy{
+  width:clamp(28px, 3vw, 40px);
+  height:auto;
+  opacity:0;
+  transform:translateY(3px) scale(.8);
+  transition:opacity .3s, transform .3s cubic-bezier(.2,.8,.2,1);
+  filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4)) drop-shadow(0 0 .5px rgba(120,78,14,.9));
+}
+.card.lead .trophy{ opacity:1; transform:none; }
+
+/* only once every task has been judged is anyone actually the champion */
+.champion-stamp{
+  position:absolute;
+  right:clamp(8px, 1vw, 14px);
+  bottom:clamp(10px, 1.2vw, 18px);
+  font-family:var(--type);
+  font-size:clamp(8px, .85vw, 11px);
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--wax);
+  border:2px solid var(--wax);
+  border-radius:2px;
+  padding:3px 7px;
+  transform:rotate(-9deg) scale(1.5);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .35s, transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.card.champion .champion-stamp{ opacity:.85; transform:rotate(-9deg) scale(1); }
+
+.team-name{
+  font-family:var(--slab);
+  font-size:clamp(16px, 2vw, 30px);
+  line-height:1.04;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--tint);
+  word-break:break-word;
+}
+.team-name:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
+
+.roster{
+  font-family:var(--type);
+  font-size:clamp(10px, .92vw, 12.5px);
+  line-height:1.55;
+  color:var(--ink-soft);
+  min-height:1.55em;
+}
+.roster.is-empty::before{
+  content:"add players";
+  color:var(--pencil);
+  opacity:.75;
+}
+.roster:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
+
+.pips{ display:flex; gap:3px; }
+.pip{
+  flex:1 1 0;
+  height:5px;
+  background:rgba(0,0,0,.07);
+  position:relative;
+  overflow:hidden;
+}
+.pip i{
+  position:absolute; inset:0;
+  transform-origin:left center;
+  transform:scaleX(var(--fill, 0));
+  background:var(--tab);
+  transition:transform .4s cubic-bezier(.2,.7,.2,1);
+}
+
+.total-row{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  margin-top:auto;
+  padding-top:6px;
+}
+.total{
+  font-family:var(--slab);
+  font-size:clamp(34px, 5vw, 68px);
+  line-height:.86;
+  font-variant-numeric:tabular-nums;
+  color:var(--ink);
+}
+.total-unit{
+  font-family:var(--type);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+
+/* ── Matrix ───────────────────────────────────────────────── */
+.matrix-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.section-label{
+  margin:0;
+  font-family:var(--type);
+  font-weight:700;
+  font-size:clamp(10px, 1vw, 12px);
+  letter-spacing:.34em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+.progress{
+  margin:0;
+  font-family:var(--type);
+  font-size:clamp(10px, 1vw, 12px);
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  font-variant-numeric:tabular-nums;
+}
+
+.scroller{ overflow-x:auto; }
+
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:760px;
+}
+
+thead th{
+  padding:0 0 10px;
+  vertical-align:bottom;
+  text-align:center;
+  font-weight:400;
+}
+thead th:first-child{ text-align:left; }
+
+.col-head{
+  display:block;
+  font-family:var(--slab);
+  font-size:clamp(11px, 1.15vw, 16px);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--tint);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.col-rule{ display:block; height:3px; background:var(--tab); margin-top:7px; }
+
+tbody td{
+  border-top:1px solid var(--rule-soft);
+  padding:0;
+  vertical-align:middle;
+}
+tbody tr:first-child td{ border-top:1px solid var(--rule); }
+tbody tr:last-child td{ border-bottom:1px solid var(--rule); }
+
+.task-cell{
+  padding:12px 20px 12px 0;
+  width:33%;
+  min-width:250px;
+}
+.task-inner{ display:flex; align-items:baseline; gap:12px; }
+.task-num{
+  font-family:var(--slab);
+  font-size:clamp(12px, 1.2vw, 17px);
+  color:var(--pencil);
+  font-variant-numeric:tabular-nums;
+  min-width:1.5em;
+}
+.task-name{
+  font-family:var(--type);
+  font-weight:700;
+  font-size:clamp(13px, 1.5vw, 20px);
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--ink);
+  line-height:1.2;
+}
+.task-flag{
+  display:inline-block;
+  margin-left:10px;
+  font-family:var(--type);
+  font-weight:700;
+  font-size:9px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--wax);
+  border:1.5px solid var(--wax);
+  border-radius:2px;
+  padding:2px 6px;
+  vertical-align:middle;
+  white-space:nowrap;
+  transform:rotate(-1.5deg);
+}
+.task-body{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+.task-brief{
+  margin:0;
+  font-family:var(--type);
+  font-size:clamp(10px, .92vw, 12.5px);
+  line-height:1.5;
+  color:var(--ink-soft);
+  max-width:52ch;
+}
+.task-brief.is-empty::before{ content:"add the task wording"; color:var(--pencil); opacity:.65; }
+.task-brief:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
+
+.score-td{ text-align:center; padding:7px 6px; }
+
+.cell{
+  appearance:none;
+  position:relative;
+  width:100%;
+  min-height:50px;
+  border:1px solid transparent;
+  border-radius:1px;
+  background:rgba(0,0,0,.022);
+  color:var(--pencil);
+  font-family:var(--slab);
+  font-size:clamp(19px, 2.1vw, 30px);
+  font-variant-numeric:tabular-nums;
+  line-height:1;
+  cursor:pointer;
+  transition:background-color .2s, border-color .2s, color .2s;
+}
+.cell:hover{ border-color:var(--pencil); }
+.cell:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
+.cell.scored{
+  color:var(--tint);
+  background:color-mix(in srgb, var(--tab) calc(var(--a) * 20%), transparent);
+  border-color:color-mix(in srgb, var(--tab) calc(var(--a) * 34%), transparent);
+}
+/* the winner of each task gets circled, the way you would on paper */
+.cell.best::after{
+  content:"";
+  position:absolute;
+  inset:2px 8px;
+  border:2px solid var(--tab);
+  border-radius:50%;
+  transform:rotate(-4deg);
+  opacity:.9;
+  pointer-events:none;
+}
+.cell.stamped{ animation:stamp .32s cubic-bezier(.2,.8,.2,1); }
+@keyframes stamp{
+  0%{ transform:scale(1.24) rotate(-3deg); opacity:.4; }
+  55%{ transform:scale(.97) rotate(.6deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0); opacity:1; }
+}
+
+tfoot td{ padding-top:14px; }
+.foot-total{
+  text-align:center;
+  font-family:var(--slab);
+  font-size:clamp(17px, 1.9vw, 26px);
+  font-variant-numeric:tabular-nums;
+  color:var(--tint);
+}
+.foot-label{ padding-right:20px; }
+
+/* ── Popover ──────────────────────────────────────────────── */
+.pop-menu{
+  position:fixed;
+  z-index:50;
+  display:none;
+  gap:4px;
+  padding:6px;
+  background:#FBF8F0;
+  border:1px solid var(--rule);
+  box-shadow:0 14px 30px -10px rgba(0,0,0,.5);
+}
+.pop-menu.open{ display:flex; }
+.pop-menu button{
+  appearance:none;
+  width:42px; height:42px;
+  border:1px solid var(--rule-soft);
+  border-radius:1px;
+  background:#FFFDF7;
+  color:var(--ink);
+  font-family:var(--slab);
+  font-size:19px;
+  cursor:pointer;
+  transition:background-color .14s, color .14s, border-color .14s;
+}
+.pop-menu button:hover{ background:var(--pop-tab, var(--ink)); color:#FFFDF7; border-color:transparent; }
+.pop-menu button:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
+.pop-menu button.clear{ color:var(--pencil); font-family:var(--type); font-size:15px; }
+
+/* ── Footer ───────────────────────────────────────────────── */
+.legend{
+  display:flex;
+  gap:clamp(18px, 4vw, 54px);
+  flex-wrap:wrap;
+  padding-top:clamp(14px, 2vw, 22px);
+  border-top:1px solid var(--rule);
+  font-size:12px;
+  line-height:1.65;
+  color:var(--ink-soft);
+}
+.legend div{ max-width:36ch; }
+.legend dt{
+  font-family:var(--type);
+  font-weight:700;
+  font-size:10px;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--pencil);
+  margin-bottom:5px;
+}
+
+@media (max-width:900px){
+  .standings{ flex-wrap:wrap; }
+  .card{ flex:1 1 45%; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="golden-head" viewBox="0 0 24 30">
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6DC8C"/>
+      <stop offset=".42" stop-color="#DFA92C"/>
+      <stop offset=".72" stop-color="#B9791A"/>
+      <stop offset="1" stop-color="#E7C05A"/>
+    </linearGradient>
+    <!-- one fill, no strokes: overlapping shapes must read as a single
+         cast silhouette, and per-shape strokes draw seams across it -->
+    <g fill="url(#gold)">
+      <rect x="1.8" y="26" width="20.4" height="4" rx="1"/>
+      <rect x="4" y="23.8" width="16" height="2.6" rx=".6"/>
+      <path d="M4.2 23.8c0-4.8 3-7.1 7.8-7.1s7.8 2.3 7.8 7.1z"/>
+      <rect x="9.9" y="13.6" width="4.2" height="5" rx="1.6"/>
+      <ellipse cx="12" cy="8.6" rx="5.5" ry="6.6"/>
+      <ellipse cx="6.9" cy="9.2" rx="1.2" ry="1.7"/>
+      <ellipse cx="17.1" cy="9.2" rx="1.2" ry="1.7"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="sheet">
+
+  <header class="envelope">
+    <h1 id="title" contenteditable="true" spellcheck="false">Taskmaster</h1>
+    <p class="tagline">Nine tasks &middot; Five teams &middot; <b>up to <span id="remaining">45</span> points still to win</b></p>
+    <p class="credits">
+      <span class="credit"><em>Taskmaster</em> <span id="taskmaster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the Taskmaster"></span></span>
+      <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the assistant"></span></span>
+    </p>
+    <div class="wax" aria-hidden="true"><span>TM</span></div>
+  </header>
+
+  <div class="controls">
+    <button class="btn" id="fullscreen" type="button">Full screen</button>
+    <button class="btn danger" id="reset" type="button">Reset scores</button>
+  </div>
+
+  <section class="standings" id="standings" aria-label="Standings"></section>
+
+  <section aria-label="Task scoring">
+    <div class="matrix-head">
+      <h2 class="section-label">The Tasks</h2>
+      <p class="progress"><span id="judged">0</span> of 9 tasks judged</p>
+    </div>
+    <div class="scroller">
+      <table id="matrix">
+        <thead><tr id="matrix-head"></tr></thead>
+        <tbody id="matrix-body"></tbody>
+        <tfoot><tr id="matrix-foot"></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <footer class="legend">
+    <div>
+      <dt>Scoring</dt>
+      Five points to the team the Taskmaster likes best, down to one for the team he likes least. Zero is reserved for disqualification, and disqualification is always available.
+    </div>
+    <div>
+      <dt>Entering scores</dt>
+      Click any square and pick a number, or focus it and type 0&ndash;5. Backspace clears it. Arrow keys move around the grid.
+    </div>
+    <div>
+      <dt>Editing</dt>
+      The title, the two names at the top, team names, player lists and every task&rsquo;s wording are editable &mdash; click and type. Everything saves to this browser automatically.
+    </div>
+    <div>
+      <dt>The golden head</dt>
+      It sits with whoever leads, and moves the instant that changes. Whoever holds it after the relay keeps it.
+    </div>
+  </footer>
+
+</div>
+
+<div class="pop-menu" id="pop" role="menu" aria-label="Award points"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Briefs are written to be read aloud, and are editable on the page.
+  var TASKS = [
+    { name:"Longest Line",
+      brief:"Make the longest line. You may use anything you can carry, but nothing that is nailed down. Longest line wins." },
+    { name:"Coolest Phone Photo",
+      brief:"Show us the coolest photograph already on your phone. It must not have been taken tonight. Coolest photo wins." },
+    { name:"Recreate Phone Photo",
+      brief:"Recreate another team's photo using only the people and objects in this house. Most accurate recreation wins." },
+    { name:"Treasure Hunt",
+      brief:"Find the hidden treasure. It is somewhere you are allowed to go. First team back with it wins." },
+    { name:"Hit Song",
+      brief:"Write and perform a hit song. It must have a chorus and it must be a hit. Best hit wins." },
+    { name:"Museum Piece", flag:"Prize task",
+      brief:"Bring the item most deserving of its own museum. Points awarded entirely at the Taskmaster's whim." },
+    { name:"Painting",
+      brief:"Paint a masterpiece. It must be finished, framed and defensible. Best painting wins." },
+    { name:"Commercial",
+      brief:"Devise and perform an advert for an object in this room. Most persuasive advert wins." },
+    { name:"Relay", flag:"Finale",
+      brief:"Complete the relay. Every player must do exactly one leg. Fastest team wins. Your time starts now." }
+  ];
+
+  var TEAMS = [
+    { name:"Red",    tab:"var(--red-tab)", tint:"var(--red-ink)" },
+    { name:"Yellow", tab:"var(--yel-tab)", tint:"var(--yel-ink)" },
+    { name:"Green",  tab:"var(--grn-tab)", tint:"var(--grn-ink)" },
+    { name:"Blue",   tab:"var(--blu-tab)", tint:"var(--blu-ink)" },
+    { name:"Purple", tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
+  ];
+
+  var ROMAN = ["I","II","III","IV","V"];
+  var NT = TASKS.length, NP = TEAMS.length;
+  var KEY = "taskmaster-scoreboard-v1";
+  var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function emptyScores(){
+    return TASKS.map(function(){ return TEAMS.map(function(){ return null; }); });
+  }
+
+  function blank(){
+    return {
+      title:"Taskmaster",
+      taskmaster:"",
+      assistant:"",
+      teams:TEAMS.map(function(t){ return { name:t.name, roster:"" }; }),
+      briefs:TASKS.map(function(t){ return t.brief; }),
+      scores:emptyScores()
+    };
+  }
+
+  function load(){
+    var fresh = blank();
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return fresh;
+      var saved = JSON.parse(raw);
+      if(typeof saved.title === "string") fresh.title = saved.title;
+      if(typeof saved.taskmaster === "string") fresh.taskmaster = saved.taskmaster;
+      if(typeof saved.assistant === "string") fresh.assistant = saved.assistant;
+      if(Array.isArray(saved.briefs)){
+        saved.briefs.slice(0, NT).forEach(function(b, i){
+          if(typeof b === "string") fresh.briefs[i] = b;
+        });
+      }
+      if(Array.isArray(saved.teams)){
+        saved.teams.slice(0, NP).forEach(function(t, i){
+          if(!t) return;
+          if(typeof t.name === "string") fresh.teams[i].name = t.name;
+          if(typeof t.roster === "string") fresh.teams[i].roster = t.roster;
+        });
+      }
+      if(Array.isArray(saved.scores)){
+        saved.scores.slice(0, NT).forEach(function(row, r){
+          if(!Array.isArray(row)) return;
+          row.slice(0, NP).forEach(function(v, c){
+            fresh.scores[r][c] = (typeof v === "number" && v >= 0 && v <= 5) ? v : null;
+          });
+        });
+      }
+    }catch(e){ /* unreadable or corrupt storage: start clean rather than fail */ }
+    return fresh;
+  }
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  var state = load();
+
+  function totalFor(team){
+    return state.scores.reduce(function(sum, row){ return sum + (row[team] || 0); }, 0);
+  }
+
+  function bindEditable(el, commit){
+    el.addEventListener("keydown", function(ev){
+      if(ev.key === "Enter"){ ev.preventDefault(); el.blur(); }
+    });
+    el.addEventListener("paste", function(ev){
+      ev.preventDefault();
+      var text = ((ev.clipboardData || window.clipboardData).getData("text") || "").replace(/\s+/g, " ");
+      document.execCommand("insertText", false, text);
+    });
+    el.addEventListener("input", function(){ commit(el.textContent.trim()); });
+  }
+
+  /* ── Standings cards ────────────────────────────────────── */
+  var standings = document.getElementById("standings");
+  var headEls = [], footEls = [], cells = [];
+
+  var cards = TEAMS.map(function(team, i){
+    var card = document.createElement("article");
+    card.className = "card";
+    card.style.setProperty("--tab", team.tab);
+    card.style.setProperty("--tint", team.tint);
+    card.innerHTML =
+      '<div class="card-top"><span class="rank"></span>' +
+        '<svg class="trophy" viewBox="0 0 24 30" role="img" aria-label="Holds the golden head"><use href="#golden-head"/></svg>' +
+      '</div>' +
+      '<div class="team-name" contenteditable="true" spellcheck="false" role="textbox" aria-label="Team name"></div>' +
+      '<div class="roster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Players"></div>' +
+      '<div class="pips">' + new Array(NT + 1).join('<span class="pip"><i></i></span>') + '</div>' +
+      '<div class="total-row"><span class="total">0</span><span class="total-unit">pts</span></div>' +
+      '<span class="champion-stamp">Champion</span>';
+
+    var nameEl = card.querySelector(".team-name");
+    var rosterEl = card.querySelector(".roster");
+    nameEl.textContent = state.teams[i].name;
+    rosterEl.textContent = state.teams[i].roster;
+    rosterEl.classList.toggle("is-empty", !state.teams[i].roster);
+
+    bindEditable(nameEl, function(text){
+      state.teams[i].name = text;
+      save();
+      headEls[i].textContent = text || TEAMS[i].name;
+    });
+    bindEditable(rosterEl, function(text){
+      state.teams[i].roster = text;
+      rosterEl.classList.toggle("is-empty", !text);
+      save();
+    });
+
+    standings.appendChild(card);
+    return card;
+  });
+
+  /* ── Matrix ─────────────────────────────────────────────── */
+  var headRow = document.getElementById("matrix-head");
+  var body = document.getElementById("matrix-body");
+  var foot = document.getElementById("matrix-foot");
+
+  var corner = document.createElement("th");
+  corner.scope = "col";
+  corner.innerHTML = '<span class="section-label">Task</span>';
+  headRow.appendChild(corner);
+
+  TEAMS.forEach(function(team, i){
+    var th = document.createElement("th");
+    th.scope = "col";
+    th.style.setProperty("--tab", team.tab);
+    th.style.setProperty("--tint", team.tint);
+    var label = document.createElement("span");
+    label.className = "col-head";
+    label.textContent = state.teams[i].name || team.name;
+    var rule = document.createElement("span");
+    rule.className = "col-rule";
+    th.appendChild(label);
+    th.appendChild(rule);
+    headRow.appendChild(th);
+    headEls.push(label);
+  });
+
+  TASKS.forEach(function(task, r){
+    var tr = document.createElement("tr");
+
+    var td = document.createElement("td");
+    td.className = "task-cell";
+    var inner = document.createElement("div");
+    inner.className = "task-inner";
+
+    var num = document.createElement("span");
+    num.className = "task-num";
+    num.textContent = r + 1;
+
+    var name = document.createElement("span");
+    name.className = "task-name";
+    name.textContent = task.name;
+    if(task.flag){
+      var flag = document.createElement("span");
+      flag.className = "task-flag";
+      flag.textContent = task.flag;
+      name.appendChild(flag);
+    }
+
+    var brief = document.createElement("p");
+    brief.className = "task-brief";
+    brief.contentEditable = "true";
+    brief.spellcheck = false;
+    brief.setAttribute("role", "textbox");
+    brief.setAttribute("aria-label", task.name + " — task wording");
+    brief.textContent = state.briefs[r];
+    brief.classList.toggle("is-empty", !state.briefs[r]);
+    bindEditable(brief, function(text){
+      state.briefs[r] = text;
+      brief.classList.toggle("is-empty", !text);
+      save();
+    });
+
+    var bodyCol = document.createElement("div");
+    bodyCol.className = "task-body";
+    bodyCol.appendChild(name);
+    bodyCol.appendChild(brief);
+
+    inner.appendChild(num);
+    inner.appendChild(bodyCol);
+    td.appendChild(inner);
+    tr.appendChild(td);
+
+    cells[r] = [];
+    TEAMS.forEach(function(team, c){
+      var scoreTd = document.createElement("td");
+      scoreTd.className = "score-td";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cell";
+      btn.style.setProperty("--tab", team.tab);
+      btn.style.setProperty("--tint", team.tint);
+      btn.dataset.r = r;
+      btn.dataset.c = c;
+      btn.setAttribute("aria-label", task.name + " — " + team.name);
+      btn.addEventListener("click", function(){ openMenu(btn, r, c, team.tab); });
+      btn.addEventListener("keydown", function(ev){ onCellKey(ev, r, c); });
+      scoreTd.appendChild(btn);
+      tr.appendChild(scoreTd);
+      cells[r][c] = btn;
+    });
+
+    body.appendChild(tr);
+  });
+
+  var footLabel = document.createElement("td");
+  footLabel.className = "foot-label";
+  footLabel.innerHTML = '<span class="section-label">Total</span>';
+  foot.appendChild(footLabel);
+  TEAMS.forEach(function(team){
+    var td = document.createElement("td");
+    td.className = "foot-total";
+    td.style.setProperty("--tint", team.tint);
+    td.textContent = "0";
+    foot.appendChild(td);
+    footEls.push(td);
+  });
+
+  /* ── Score entry ────────────────────────────────────────── */
+  var pop = document.getElementById("pop");
+  var popTarget = null;
+
+  [5,4,3,2,1,0].forEach(function(n){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = n;
+    b.addEventListener("click", function(){ commit(n); });
+    pop.appendChild(b);
+  });
+  var clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "clear";
+  clearBtn.textContent = "—";
+  clearBtn.title = "Clear";
+  clearBtn.addEventListener("click", function(){ commit(null); });
+  pop.appendChild(clearBtn);
+
+  function openMenu(btn, r, c, tab){
+    popTarget = { r:r, c:c, btn:btn };
+    pop.style.setProperty("--pop-tab", tab);
+    pop.classList.add("open");
+    var rect = btn.getBoundingClientRect();
+    var w = pop.offsetWidth, h = pop.offsetHeight;
+    var left = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), window.innerWidth - w - 8);
+    var top = rect.bottom + 8;
+    if(top + h > window.innerHeight - 8) top = Math.max(8, rect.top - h - 8);
+    pop.style.left = left + "px";
+    pop.style.top = top + "px";
+    pop.firstChild.focus();
+  }
+
+  function closeMenu(refocus){
+    if(!pop.classList.contains("open")) return;
+    pop.classList.remove("open");
+    if(refocus && popTarget) popTarget.btn.focus();
+    popTarget = null;
+  }
+
+  function commit(value){
+    if(!popTarget) return;
+    setScore(popTarget.r, popTarget.c, value);
+    closeMenu(true);
+  }
+
+  function setScore(r, c, value){
+    state.scores[r][c] = value;
+    save();
+    if(!REDUCED && value !== null){
+      var btn = cells[r][c];
+      btn.classList.remove("stamped");
+      void btn.offsetWidth;
+      btn.classList.add("stamped");
+    }
+    render();
+  }
+
+  function onCellKey(ev, r, c){
+    if(ev.key >= "0" && ev.key <= "5"){
+      ev.preventDefault();
+      setScore(r, c, parseInt(ev.key, 10));
+      return;
+    }
+    if(ev.key === "Backspace" || ev.key === "Delete"){
+      ev.preventDefault();
+      setScore(r, c, null);
+      return;
+    }
+    var dr = 0, dc = 0;
+    if(ev.key === "ArrowUp") dr = -1;
+    else if(ev.key === "ArrowDown") dr = 1;
+    else if(ev.key === "ArrowLeft") dc = -1;
+    else if(ev.key === "ArrowRight") dc = 1;
+    else return;
+    ev.preventDefault();
+    cells[Math.min(Math.max(0, r + dr), NT - 1)][Math.min(Math.max(0, c + dc), NP - 1)].focus();
+  }
+
+  document.addEventListener("click", function(ev){
+    if(pop.contains(ev.target)) return;
+    if(popTarget && popTarget.btn === ev.target) return;
+    closeMenu(false);
+  }, true);
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape") closeMenu(true);
+  });
+  window.addEventListener("resize", function(){ closeMenu(false); });
+
+  /* ── Render ─────────────────────────────────────────────── */
+  function render(){
+    var totals = TEAMS.map(function(_, i){ return totalFor(i); });
+    var leadScore = Math.max.apply(null, totals);
+    var anyScored = state.scores.some(function(row){
+      return row.some(function(v){ return v !== null; });
+    });
+    var judged = 0;
+
+    state.scores.forEach(function(row, r){
+      var rowMax = -1, complete = true;
+      row.forEach(function(v){
+        if(v === null) complete = false;
+        else if(v > rowMax) rowMax = v;
+      });
+      if(complete) judged++;
+
+      row.forEach(function(v, c){
+        var btn = cells[r][c];
+        if(v === null){
+          btn.textContent = "·";
+          btn.classList.remove("scored", "best");
+          btn.style.removeProperty("--a");
+        }else{
+          btn.textContent = v;
+          btn.classList.add("scored");
+          btn.classList.toggle("best", rowMax > 0 && v === rowMax);
+          btn.style.setProperty("--a", (v / 5).toFixed(2));
+        }
+      });
+    });
+
+    // Equal totals share a rank, then the next rank skips: 1, 1, 3…
+    var order = totals.map(function(t, i){ return { i:i, total:t }; })
+                      .sort(function(a, b){ return b.total - a.total; });
+    var ranks = [];
+    order.forEach(function(entry, idx){
+      ranks[entry.i] = (idx > 0 && entry.total === order[idx - 1].total)
+        ? ranks[order[idx - 1].i]
+        : idx + 1;
+    });
+
+    cards.forEach(function(card, i){
+      card.classList.toggle("lead", anyScored && totals[i] === leadScore);
+      card.classList.toggle("champion", judged === NT && totals[i] === leadScore);
+      card.querySelector(".rank").textContent = anyScored ? ROMAN[ranks[i] - 1] : "—";
+      card.querySelector(".total").textContent = totals[i];
+      var pips = card.querySelectorAll(".pip i");
+      state.scores.forEach(function(row, r){
+        pips[r].style.setProperty("--fill", row[i] === null ? 0 : (row[i] / 5).toFixed(2));
+      });
+      footEls[i].textContent = totals[i];
+    });
+
+    document.getElementById("judged").textContent = judged;
+    // Most a single team can still add: five points per task not yet judged.
+    document.getElementById("remaining").textContent = (NT - judged) * 5;
+
+    reorder(order);
+  }
+
+  // FLIP: the cards re-sort themselves the moment a score lands.
+  function reorder(order){
+    var first = cards.map(function(c){ return c.getBoundingClientRect().left; });
+    order.forEach(function(entry, idx){ cards[entry.i].style.order = idx; });
+    if(REDUCED) return;
+    var last = cards.map(function(c){ return c.getBoundingClientRect().left; });
+    cards.forEach(function(card, i){
+      var dx = first[i] - last[i];
+      if(Math.abs(dx) < 1) return;
+      card.style.transition = "none";
+      card.style.transform = "translateX(" + dx + "px)";
+      requestAnimationFrame(function(){
+        card.style.transition = "transform .55s cubic-bezier(.2,.7,.2,1)";
+        card.style.transform = "";
+      });
+    });
+  }
+
+  /* ── Title and controls ─────────────────────────────────── */
+  var titleEl = document.getElementById("title");
+  titleEl.textContent = state.title;
+  bindEditable(titleEl, function(text){ state.title = text; save(); });
+
+  [["taskmaster", "taskmaster"], ["assistant", "assistant"]].forEach(function(pair){
+    var el = document.getElementById(pair[0]);
+    var field = pair[1];
+    el.textContent = state[field];
+    el.classList.toggle("is-empty", !state[field]);
+    bindEditable(el, function(text){
+      state[field] = text;
+      el.classList.toggle("is-empty", !text);
+      save();
+    });
+  });
+
+  document.getElementById("fullscreen").addEventListener("click", function(){
+    try{
+      if(document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }catch(e){}
+  });
+
+  document.getElementById("reset").addEventListener("click", function(){
+    if(!window.confirm("Clear every score? Team names and players are kept.")) return;
+    state.scores = emptyScores();
+    save();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
