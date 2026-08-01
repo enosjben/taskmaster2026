@@ -111,8 +111,10 @@ body{
 
 h1{
   margin:0;
-  font-family:var(--slab);
-  font-weight:400;
+  font-family:var(--type);
+  /* the face ships in one weight; the browser's synthetic bold is what gives
+     the wordmark its stamped heft */
+  font-weight:700;
   font-size:clamp(34px, 7.4vw, 104px);
   line-height:1;
   letter-spacing:.055em;
@@ -124,7 +126,7 @@ h1{
 }
 h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 
-.credits{
+.flap{
   position:absolute;
   left:0; right:0;
   bottom:clamp(28px, 3.4vw, 44px);
@@ -138,31 +140,6 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
   color:var(--ink-soft);
   z-index:2;
 }
-/* the flap tint behind each credit, so the crease does not run through
-   the names the way it runs behind the rest of the envelope */
-.credit{
-  display:inline-flex;
-  align-items:baseline;
-  gap:8px;
-  padding:2px clamp(6px, .9vw, 12px);
-  background:#F1EADC;
-}
-.credit em{
-  font-style:normal;
-  font-weight:700;
-  font-size:9px;
-  letter-spacing:.2em;
-  text-transform:uppercase;
-  color:var(--pencil);
-}
-.credit span{
-  min-width:7ch;
-  border-bottom:1px dotted var(--rule);
-  padding:0 2px 1px;
-}
-.credit span.is-empty::before{ content:"name"; color:var(--pencil); opacity:.6; }
-.credit span:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
-
 /* ── Wax seal ─────────────────────────────────────────────── */
 .wax{
   position:relative;
@@ -557,8 +534,7 @@ tfoot td{ padding-top:14px; }
 
   .envelope{ padding:1.4vh 2vw 5vh; }
   h1{ font-size:6.6vh; letter-spacing:.05em; }
-  .credits{ bottom:2.6vh; font-size:1.42vh; gap:1.2vw; }
-  .credit em{ font-size:1.15vh; }
+  .flap{ bottom:2.6vh; }
   .envelope::after{ bottom:2.6vh; }
   .wax{ width:7.6vh; height:7.6vh; }
   .wax span{ font-size:2.1vh; }
@@ -658,10 +634,8 @@ tfoot td{ padding-top:14px; }
 
   <header class="envelope">
     <h1 id="title" contenteditable="true" spellcheck="false">Taskmaster</h1>
-    <div class="credits">
-      <span class="credit"><em>Taskmaster</em> <span id="taskmaster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the Taskmaster"></span></span>
+    <div class="flap">
       <span class="wax"><span id="seal" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials">BE</span></span>
-      <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials"></span></span>
     </div>
   </header>
 
@@ -727,8 +701,6 @@ tfoot td{ padding-top:14px; }
     return {
       title:"Taskmaster",
       seal:"BE",
-      taskmaster:"Ben",
-      assistant:"Kara",
       teams:TEAMS.map(function(t){ return { name:t.name, roster:"" }; }),
       scores:emptyScores()
     };
@@ -742,8 +714,6 @@ tfoot td{ padding-top:14px; }
       var saved = JSON.parse(raw);
       if(typeof saved.title === "string") fresh.title = saved.title;
       if(typeof saved.seal === "string" && saved.seal) fresh.seal = saved.seal;
-      if(typeof saved.taskmaster === "string" && saved.taskmaster) fresh.taskmaster = saved.taskmaster;
-      if(typeof saved.assistant === "string" && saved.assistant) fresh.assistant = saved.assistant;
       if(Array.isArray(saved.teams)){
         saved.teams.slice(0, NP).forEach(function(t, i){
           if(!t) return;
@@ -1074,18 +1044,6 @@ tfoot td{ padding-top:14px; }
   var sealEl = document.getElementById("seal");
   sealEl.textContent = state.seal;
   bindEditable(sealEl, function(text){ state.seal = text; save(); });
-
-  [["taskmaster", "taskmaster"], ["assistant", "assistant"]].forEach(function(pair){
-    var el = document.getElementById(pair[0]);
-    var field = pair[1];
-    el.textContent = state[field];
-    el.classList.toggle("is-empty", !state[field]);
-    bindEditable(el, function(text){
-      state[field] = text;
-      el.classList.toggle("is-empty", !text);
-      save();
-    });
-  });
 
   document.getElementById("fullscreen").addEventListener("click", function(){
     try{

@@ -101,7 +101,9 @@ the slice to its border thickness in pixels, and rebuild.
 
 ## Fonts
 
-- **Bevan** — display slab, for the wordmark, team names and scores. SIL Open
-  Font License 1.1, redistributed here under its terms.
-- **Veteran Typewriter** — everything else. Supplied by the repository owner;
-  check its own licence before redistributing.
+- **Veteran Typewriter** — the wordmark and all running text. Supplied by the
+  repository owner; check its own licence before redistributing. It ships in
+  one weight, so bold is the browser's synthetic bold.
+- **Bevan** — display slab, kept for the team names, the scores and the grid
+  numerals, where the heavier slab reads better at a glance. SIL Open Font
+  License 1.1, redistributed here under its terms.
