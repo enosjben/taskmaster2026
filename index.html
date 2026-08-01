@@ -129,16 +129,6 @@ h1{
 }
 h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 
-.tagline{
-  margin:clamp(10px, 1.4vw, 16px) 0 0;
-  font-family:var(--type);
-  font-size:clamp(10px, 1.05vw, 13px);
-  letter-spacing:.4em;
-  text-transform:uppercase;
-  color:var(--pencil);
-}
-.tagline b{ color:var(--ink-soft); font-weight:700; }
-
 .credits{
   margin:clamp(8px, 1vw, 12px) 0 0;
   display:flex;
@@ -533,28 +523,6 @@ tfoot td{ padding-top:14px; }
 .pop-menu button:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
 .pop-menu button.clear{ color:var(--pencil); font-family:var(--type); font-size:15px; }
 
-/* ── Footer ───────────────────────────────────────────────── */
-.legend{
-  display:flex;
-  gap:clamp(18px, 4vw, 54px);
-  flex-wrap:wrap;
-  padding-top:clamp(14px, 2vw, 22px);
-  border-top:1px solid var(--rule);
-  font-size:12px;
-  line-height:1.65;
-  color:var(--ink-soft);
-}
-.legend div{ max-width:36ch; }
-.legend dt{
-  font-family:var(--type);
-  font-weight:700;
-  font-size:10px;
-  letter-spacing:.24em;
-  text-transform:uppercase;
-  color:var(--pencil);
-  margin-bottom:5px;
-}
-
 /* ── Big screen ───────────────────────────────────────────────
    Built for a 1920x1080 TV: the whole board fits the viewport with
    nothing to scroll. Everything is sized in vh so it holds at any
@@ -574,8 +542,7 @@ tfoot td{ padding-top:14px; }
 
   .envelope{ padding:1.4vh 2vw 5vh; }
   h1{ font-size:6.6vh; letter-spacing:.05em; }
-  .tagline{ margin-top:.9vh; font-size:1.42vh; letter-spacing:.36em; }
-  .credits{ margin-top:.7vh; font-size:1.42vh; gap:2vw; }
+  .credits{ margin-top:1.4vh; font-size:1.42vh; gap:2vw; }
   .credit em{ font-size:1.15vh; }
   .envelope::after{ bottom:2.6vh; }
   .wax{ width:6.6vh; height:6.6vh; bottom:2.6vh; }
@@ -637,18 +604,6 @@ tfoot td{ padding-top:14px; }
 
   tfoot td{ padding-top:.7vh; }
   .foot-total{ font-size:2.4vh; }
-
-  /* one compact line: the rules guests care about, nothing else */
-  .legend{
-    flex:0 0 auto;
-    padding-top:.8vh;
-    gap:2.4vw;
-    font-size:1.3vh;
-    line-height:1.4;
-  }
-  .legend div{ max-width:none; }
-  .legend dt{ display:inline; margin:0 .5em 0 0; font-size:1.15vh; }
-  .legend-entry, .legend-editing, .legend-head{ display:none; }
 }
 
 @media (max-width:900px){
@@ -689,7 +644,6 @@ tfoot td{ padding-top:14px; }
 
   <header class="envelope">
     <h1 id="title" contenteditable="true" spellcheck="false">Taskmaster</h1>
-    <p class="tagline">Nine tasks &middot; Five teams &middot; <b>up to <span id="remaining">45</span> points still to win</b></p>
     <p class="credits">
       <span class="credit"><em>Taskmaster</em> <span id="taskmaster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the Taskmaster"></span></span>
       <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the assistant"></span></span>
@@ -718,24 +672,6 @@ tfoot td{ padding-top:14px; }
     </div>
   </section>
 
-  <footer class="legend">
-    <div class="legend-scoring">
-      <dt>Scoring</dt>
-      Five points to the team the Taskmaster likes best, down to one for the team he likes least. Zero is disqualification.
-    </div>
-    <div class="legend-entry">
-      <dt>Entering scores</dt>
-      Click any square and pick a number, or focus it and type 0&ndash;5. Backspace clears it. Arrow keys move around the grid.
-    </div>
-    <div class="legend-editing">
-      <dt>Editing</dt>
-      The title, the initials on the seal, the two names at the top, team names and player lists are editable &mdash; click and type. Everything saves to this browser automatically.
-    </div>
-    <div class="legend-head">
-      <dt>The golden head</dt>
-      It sits with whoever leads, and moves the instant that changes. Whoever holds it after the relay keeps it.
-    </div>
-  </footer>
 
 </div>
 
@@ -778,8 +714,8 @@ tfoot td{ padding-top:14px; }
     return {
       title:"Taskmaster",
       seal:"BE",
-      taskmaster:"",
-      assistant:"",
+      taskmaster:"Ben",
+      assistant:"Kara",
       teams:TEAMS.map(function(t){ return { name:t.name, roster:"" }; }),
       scores:emptyScores()
     };
@@ -793,8 +729,8 @@ tfoot td{ padding-top:14px; }
       var saved = JSON.parse(raw);
       if(typeof saved.title === "string") fresh.title = saved.title;
       if(typeof saved.seal === "string" && saved.seal) fresh.seal = saved.seal;
-      if(typeof saved.taskmaster === "string") fresh.taskmaster = saved.taskmaster;
-      if(typeof saved.assistant === "string") fresh.assistant = saved.assistant;
+      if(typeof saved.taskmaster === "string" && saved.taskmaster) fresh.taskmaster = saved.taskmaster;
+      if(typeof saved.assistant === "string" && saved.assistant) fresh.assistant = saved.assistant;
       if(Array.isArray(saved.teams)){
         saved.teams.slice(0, NP).forEach(function(t, i){
           if(!t) return;
@@ -1103,8 +1039,6 @@ tfoot td{ padding-top:14px; }
     });
 
     document.getElementById("judged").textContent = judged;
-    // Most a single team can still add: five points per task not yet judged.
-    document.getElementById("remaining").textContent = (NT - judged) * 5;
 
     reorder(order);
   }
