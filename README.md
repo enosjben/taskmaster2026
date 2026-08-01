@@ -69,17 +69,39 @@ template:
 python3 build.py
 ```
 
-That inlines the fonts from `fonts/` into `src/index.template.html` as data
-URIs and writes `index.html`, plus `dist/artifact.html` (the same page as a
-bare fragment, for hosts that supply their own document skeleton). Fonts are
-embedded rather than linked because a page served under a strict
-content-security policy can't fetch a font CDN, and the fallback would lose
-the wordmark the design rests on.
+That inlines the fonts from `fonts/` and the frame from `assets/` into
+`src/index.template.html` as data URIs and writes `index.html`, plus
+`dist/artifact.html` (the same page as a bare fragment, for hosts that supply
+their own document skeleton). Everything is embedded rather than linked
+because a page served under a strict content-security policy can't fetch from
+another host, and a silent fallback would lose the look the design rests on.
+
+## The gilt frame
+
+Each team card is framed by `assets/frame.png`, applied as a CSS
+`border-image`. Nine-slicing it means the mitred corners stay carved at their
+drawn size while the beading tiles along whatever width the card ends up, so
+one square source wraps a card of any proportion.
+
+The frame is generated, not photographed:
+
+```
+python3 tools/make_frame.py     # writes assets/frame.svg
+```
+
+Each side of each moulding band is drawn as its own mitred trapezoid so it can
+be lit separately — the top rail brightest, the bottom in shadow — which is
+what reads as carved rather than printed. Rasterise the SVG to
+`assets/frame.png` at 320×320 with any renderer; the `border-image-slice` in
+the stylesheet (74) is the frame's thickness in that raster, so it must be
+updated together with the raster size.
+
+To use a different frame, drop your own square PNG at `assets/frame.png`, set
+the slice to its border thickness in pixels, and rebuild.
 
 ## Fonts
 
-- **Bevan** — display slab, for the wordmark, team names and scores
-- **Courier Prime** — typewriter, for task wording and labels
-
-Both are licensed under the SIL Open Font License 1.1 and are redistributed
-here under its terms.
+- **Bevan** — display slab, for the wordmark, team names and scores. SIL Open
+  Font License 1.1, redistributed here under its terms.
+- **Veteran Typewriter** — everything else. Supplied by the repository owner;
+  check its own licence before redistributing.
