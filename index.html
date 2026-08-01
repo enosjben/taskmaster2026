@@ -124,7 +124,7 @@ h1{
   /* letterpress bite */
   text-shadow:0 1px 0 rgba(255,255,255,.6), 0 -1px 0 rgba(0,0,0,.12);
 }
-h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
+h1{ user-select:none; -webkit-user-select:none; }
 
 .flap{
   position:absolute;
@@ -180,6 +180,8 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
   letter-spacing:.42em;
   text-indent:.42em;
   color:#7A130E;
+  user-select:none;
+  -webkit-user-select:none;
   /* embossed: light catches the top edge, shadow falls below */
   text-shadow:0 -1px 0 rgba(72,6,3,.75), 0 1px 0 rgba(255,158,146,.5);
 }
@@ -206,6 +208,8 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
   cursor:pointer;
   transition:color .16s, border-color .16s, background-color .16s;
   white-space:nowrap;
+  user-select:none;
+  -webkit-user-select:none;
 }
 .btn:hover{ color:var(--ink); border-color:var(--ink-soft); background:rgba(0,0,0,.04); }
 .btn:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
@@ -714,9 +718,9 @@ tfoot td{ padding-top:14px; }
 <div class="sheet">
 
   <header class="envelope">
-    <h1 id="title" contenteditable="true" spellcheck="false">Taskmaster</h1>
+    <h1 id="title">Taskmaster</h1>
     <div class="flap">
-      <span class="wax"><span id="seal" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials">BE</span></span>
+      <span class="wax"><span id="seal">BE</span></span>
     </div>
   </header>
 
@@ -1240,13 +1244,13 @@ tfoot td{ padding-top:14px; }
   }
 
   /* ── Title and controls ─────────────────────────────────── */
+  // Fixed: they are part of the set, and nothing good comes of a guest
+  // selecting the wordmark mid-party.
   var titleEl = document.getElementById("title");
   titleEl.textContent = state.title;
-  bindEditable(titleEl, function(text){ state.title = text; save(); });
 
   var sealEl = document.getElementById("seal");
   sealEl.textContent = state.seal;
-  bindEditable(sealEl, function(text){ state.seal = text; save(); });
 
   // An embedded page is refused the Fullscreen API outright, and the request
   // rejects asynchronously, so a try/catch never sees it. Detect that up front
@@ -1355,15 +1359,19 @@ tfoot td{ padding-top:14px; }
   // play/pause inside the first gesture is enough to earn the right.
   function unlockAudio(){
     if(!audio.el || audio.unlocked) return;
+    audio.unlocked = true;                 // claimed up front so nothing races it
     var wasMuted = audio.el.muted;
     audio.el.muted = true;
     var attempt;
     try{ attempt = audio.el.play(); }catch(e){ audio.el.muted = wasMuted; return; }
     var settle = function(){
-      audio.el.pause();
-      audio.el.currentTime = 0;
+      // A real sting may have been asked for on this same click; if so, leave
+      // it running rather than pausing the thing we were unlocking for.
+      if(!audio.wantPlay){
+        audio.el.pause();
+        audio.el.currentTime = 0;
+      }
       audio.el.muted = wasMuted;
-      audio.unlocked = true;
     };
     if(attempt && attempt.then) attempt.then(settle, function(){ audio.el.muted = wasMuted; });
     else settle();
@@ -1372,17 +1380,29 @@ tfoot td{ padding-top:14px; }
   document.addEventListener("click", unlockAudio, { capture:true, once:true });
   document.addEventListener("keydown", unlockAudio, { capture:true, once:true });
 
+  var soundPressed = false;
+
   audio.btn.addEventListener("click", function(){
+    // The label states what sound is doing, not what the press will do. Anyone
+    // pressing it first time wants to hear something, not to mute — so the
+    // opening press only plays, and toggling starts from the press after.
+    if(!soundPressed && audio.on){
+      soundPressed = true;
+      playStamp();
+      return;
+    }
+    soundPressed = true;
     audio.on = !audio.on;
     labelSound();
     try{ localStorage.setItem("taskmaster-sound", audio.on ? "on" : "off"); }catch(e){}
-    unlockAudio();
     if(audio.on) playStamp();          // so you can set the volume before guests arrive
-    else if(audio.el) audio.el.pause();
+    else if(audio.el){ audio.el.pause(); audio.el.currentTime = 0; }
   });
 
   function playStamp(){
     if(!audio.on || !audio.el) return;
+    audio.wantPlay = true;
+    audio.el.muted = false;                // the unlock may have left it muted
     try{
       audio.el.currentTime = 0;
       var played = audio.el.play();

@@ -39,8 +39,9 @@ or a small laptop window.
 - **Task names stay sealed** until a task is being scored. Until then the board
   shows only its number, so nobody watching the TV learns what is coming. Your
   phone always shows every name, because you need them.
-- **Edit anything** — the title, the initials on the wax seal, team names and
-  player lists are all click-to-edit.
+- **Team names and player lists are click-to-edit.** The wordmark and the
+  wax seal are fixed, and cannot be selected or altered by a passing guest —
+  change them in `src/index.template.html` and rebuild.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
 - **Totals sit on wax seals** under each framed team, as they do on the show.
@@ -73,11 +74,13 @@ teams have a score, so a half-finished round can't go up by accident, and after
 a successful submit the phone moves itself to the next unjudged task.
 
 A sting plays on the laptop each time a round lands, so the room hears the
-scores arrive. **Sound on / Sound off** toggles it and the choice is
-remembered. Browsers keep audio locked until the page has been clicked, so
-press the button once before guests arrive — it plays the sting so you can set
-the volume. If a round lands while audio is still locked, the button says
-**Click for sound** rather than just being quiet. Only rounds submitted from
+scores arrive. Sound is **on by default** — the button reports the current
+state rather than what pressing it will do.
+
+Browsers keep audio locked until the page has been interacted with, so press
+the button once before guests arrive: the first press only unlocks and plays
+the sting, so you can set the volume without accidentally muting. Every press
+after that toggles, and the choice is remembered. Only rounds submitted from
 the phone make a noise; typing scores on the laptop stays silent.
 
 It works both ways: rename a team or type a score on the laptop and the phone
