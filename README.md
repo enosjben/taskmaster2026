@@ -23,15 +23,22 @@ or a small laptop window.
 ## Using it during the party
 
 - **Award points** — click any square and pick a number, or focus a square and
-  type `0`–`5`. Backspace clears it. Arrow keys move around the grid.
+  type the score. Backspace clears it. Arrow keys move around the grid.
   Five points to the team the Taskmaster likes best, down to one for the team
   he likes least, and zero for disqualification.
+- **The finale is out of 15**, not 5, because the relay is anyone's game. Its
+  picker runs 0–15, and typing works by combining digits pressed in quick
+  succession, so `1` then `5` gives 15. Any other task refuses anything above
+  its own maximum.
 - **Edit anything** — the title, the initials on the wax seal, the Taskmaster
   and assistant names, team names and player lists are all click-to-edit.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
 - **Champion** is stamped on the leader only once all nine tasks are judged.
-- **Reset scores** clears the grid but keeps names and player lists.
+- **Reset scores** clears the grid but keeps names. It asks twice: the first
+  press arms the button, the second clears. Clicking elsewhere, pressing
+  Escape, or waiting five seconds cancels. It deliberately avoids a browser
+  confirm dialog, which a sandboxed page suppresses.
 
 Everything saves to the browser's local storage as you go, so a refresh or an
 accidentally closed tab won't lose the night. Scores live in that one browser
@@ -53,8 +60,9 @@ single laptop.
 ## Changing the tasks or teams
 
 Both are declared at the top of the script in `src/index.template.html` as
-`TASKS` and `TEAMS`. Add or remove entries and the grid, cards, pips and
-totals all follow — nothing else is hard-coded to nine or five.
+`TASKS` and `TEAMS`. Add or remove entries and the grid, cards and totals all
+follow — nothing else is hard-coded to nine or five. Give a task a `max` to
+change what it is scored out of, as the relay does; leave it off for 5.
 
 Note that team names typed into the page are saved and will override the
 defaults on that browser; use **Reset scores** or clear the site's local

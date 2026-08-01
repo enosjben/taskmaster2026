@@ -210,6 +210,12 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 .btn:hover{ color:var(--ink); border-color:var(--ink-soft); background:rgba(0,0,0,.04); }
 .btn:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
 .btn.danger:hover{ color:var(--wax); border-color:var(--wax); background:rgba(180,36,28,.07); }
+/* armed and waiting for the second press */
+.btn.armed, .btn.danger.armed:hover{
+  color:#FFF6EE;
+  border-color:var(--wax);
+  background:var(--wax);
+}
 
 /* ── Standings: five filing cards ─────────────────────────── */
 .standings{
@@ -494,13 +500,14 @@ tfoot td{ padding-top:14px; }
   position:fixed;
   z-index:50;
   display:none;
+  grid-template-columns:repeat(var(--cols, 7), 42px);
   gap:4px;
   padding:6px;
   background:#FBF8F0;
   border:1px solid var(--rule);
   box-shadow:0 14px 30px -10px rgba(0,0,0,.5);
 }
-.pop-menu.open{ display:flex; }
+.pop-menu.open{ display:grid; }
 .pop-menu button{
   appearance:none;
   width:42px; height:42px;
@@ -515,7 +522,7 @@ tfoot td{ padding-top:14px; }
 }
 .pop-menu button:hover{ background:var(--pop-tab, var(--ink)); color:#FFFDF7; border-color:transparent; }
 .pop-menu button:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
-.pop-menu button.clear{ color:var(--pencil); font-family:var(--type); font-size:15px; }
+.pop-menu button.clear{ color:var(--pencil); font-family:var(--type); font-size:22px; }
 
 /* ── Big screen ───────────────────────────────────────────────
    Built for a 1920x1080 TV: the whole board fits the viewport with
@@ -680,8 +687,11 @@ tfoot td{ padding-top:14px; }
     { name:"Museum Piece", flag:"Prize task" },
     { name:"Painting" },
     { name:"Commercial" },
-    { name:"Relay", flag:"Finale" }
+    { name:"Relay", flag:"Finale \u00B7 up to 15", max:15 }
   ];
+
+  // Every task is out of five unless it says otherwise.
+  TASKS.forEach(function(t){ if(!t.max) t.max = 5; });
 
   var TEAMS = [
     { name:"Red Team",    tab:"var(--red-tab)", tint:"var(--red-ink)" },
@@ -731,7 +741,7 @@ tfoot td{ padding-top:14px; }
         saved.scores.slice(0, NT).forEach(function(row, r){
           if(!Array.isArray(row)) return;
           row.slice(0, NP).forEach(function(v, c){
-            fresh.scores[r][c] = (typeof v === "number" && v >= 0 && v <= 5) ? v : null;
+            fresh.scores[r][c] = (typeof v === "number" && v >= 0 && v <= TASKS[r].max) ? v : null;
           });
         });
       }
@@ -892,23 +902,31 @@ tfoot td{ padding-top:14px; }
   var pop = document.getElementById("pop");
   var popTarget = null;
 
-  [5,4,3,2,1,0].forEach(function(n){
-    var b = document.createElement("button");
-    b.type = "button";
-    b.textContent = n;
-    b.addEventListener("click", function(){ commit(n); });
-    pop.appendChild(b);
-  });
-  var clearBtn = document.createElement("button");
-  clearBtn.type = "button";
-  clearBtn.className = "clear";
-  clearBtn.textContent = "\u00D7";
-  clearBtn.title = "Clear";
-  clearBtn.addEventListener("click", function(){ commit(null); });
-  pop.appendChild(clearBtn);
+  // Rebuilt on open: the finale runs 0-15 while every other task runs 0-5.
+  function buildMenu(max){
+    pop.innerHTML = "";
+    for(var n = max; n >= 0; n--){
+      (function(value){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = value;
+        b.addEventListener("click", function(){ commit(value); });
+        pop.appendChild(b);
+      })(n);
+    }
+    var clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "clear";
+    clearBtn.textContent = "\u00D7";
+    clearBtn.title = "Clear";
+    clearBtn.addEventListener("click", function(){ commit(null); });
+    pop.appendChild(clearBtn);
+    pop.style.setProperty("--cols", Math.min(max + 2, 6));
+  }
 
   function openMenu(btn, r, c, tab){
     popTarget = { r:r, c:c, btn:btn };
+    buildMenu(TASKS[r].max);
     pop.style.setProperty("--pop-tab", tab);
     pop.classList.add("open");
     var rect = btn.getBoundingClientRect();
@@ -946,14 +964,31 @@ tfoot td{ padding-top:14px; }
     render();
   }
 
+  // Digits typed in quick succession on the same cell combine, so the finale
+  // can be given 15 as "1" then "5" without a separate entry mode.
+  var typed = { r:-1, c:-1, value:0, at:0 };
+
   function onCellKey(ev, r, c){
-    if(ev.key >= "0" && ev.key <= "5"){
+    if(ev.key >= "0" && ev.key <= "9"){
       ev.preventDefault();
-      setScore(r, c, parseInt(ev.key, 10));
+      var max = TASKS[r].max;
+      var digit = parseInt(ev.key, 10);
+      var now = Date.now();
+      var value = null;
+      if(typed.r === r && typed.c === c && now - typed.at < 1200
+         && typed.value * 10 + digit <= max){
+        value = typed.value * 10 + digit;
+      }else if(digit <= max){
+        value = digit;
+      }
+      if(value === null) return;      // e.g. 7 on a task marked out of five
+      typed = { r:r, c:c, value:value, at:now };
+      setScore(r, c, value);
       return;
     }
     if(ev.key === "Backspace" || ev.key === "Delete"){
       ev.preventDefault();
+      typed = { r:-1, c:-1, value:0, at:0 };
       setScore(r, c, null);
       return;
     }
@@ -1004,7 +1039,7 @@ tfoot td{ padding-top:14px; }
           btn.textContent = v;
           btn.classList.add("scored");
           btn.classList.toggle("best", rowMax > 0 && v === rowMax);
-          btn.style.setProperty("--a", (v / 5).toFixed(2));
+          btn.style.setProperty("--a", (v / TASKS[r].max).toFixed(2));
         }
       });
     });
@@ -1058,11 +1093,38 @@ tfoot td{ padding-top:14px; }
     }catch(e){}
   });
 
-  document.getElementById("reset").addEventListener("click", function(){
-    if(!window.confirm("Clear every score? Team names and players are kept.")) return;
+  // A sandboxed page cannot open a modal: window.confirm is suppressed and
+  // simply returns false, which silently swallowed the reset. The guard is a
+  // two-step button instead, which needs nothing from the host page.
+  var resetBtn = document.getElementById("reset");
+  var resetArmed = false;
+  var resetTimer = null;
+
+  function disarmReset(){
+    resetArmed = false;
+    clearTimeout(resetTimer);
+    resetBtn.textContent = "Reset scores";
+    resetBtn.classList.remove("armed");
+  }
+
+  resetBtn.addEventListener("click", function(ev){
+    ev.stopPropagation();
+    if(!resetArmed){
+      resetArmed = true;
+      resetBtn.textContent = "Confirm reset";
+      resetBtn.classList.add("armed");
+      resetTimer = setTimeout(disarmReset, 5000);
+      return;
+    }
+    disarmReset();
     state.scores = emptyScores();
     save();
     render();
+  });
+
+  document.addEventListener("click", function(){ if(resetArmed) disarmReset(); });
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape") disarmReset();
   });
 
   render();
