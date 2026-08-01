@@ -403,6 +403,7 @@ h1{ user-select:none; -webkit-user-select:none; }
   text-transform:uppercase;
   color:var(--tint);
   word-break:break-word;
+  text-align:center;
 }
 .home-name:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
 .roster-field{
@@ -418,6 +419,7 @@ h1{ user-select:none; -webkit-user-select:none; }
   font-family:var(--type);
   font-size:clamp(12px, 1.05vw, 16px);
   line-height:1.7;
+  text-align:center;
 }
 .roster-field::placeholder{ color:var(--pencil); opacity:.75; }
 .roster-field:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
@@ -1537,6 +1539,14 @@ tfoot td{ padding-top:14px; }
   }
   labelSound();
 
+  function stopSting(){
+    if(audio.lastSource){
+      try{ audio.lastSource.stop(); }catch(e){}
+      audio.lastSource = null;
+    }
+    if(audio.el){ audio.el.pause(); audio.el.currentTime = 0; }
+  }
+
   function soundHint(){
     audio.btn.textContent = "Click for sound";
     clearTimeout(audio.hintTimer);
@@ -1545,6 +1555,36 @@ tfoot td{ padding-top:14px; }
 
   // Browsers refuse to play until the page has been interacted with. A silent
   // play/pause inside the first gesture is enough to earn the right.
+  // An <audio> element can have programmatic playback quietly revoked after
+  // the first go, which leaves later rounds silent. A running AudioContext
+  // replays a decoded buffer as often as asked, so that is the main path and
+  // the element is only the fallback.
+  function ensureCtx(){
+    if(!audio.ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      try{ audio.ctx = new AC(); }catch(e){ return null; }
+      audio.gain = audio.ctx.createGain();
+      audio.gain.gain.value = 0.9;
+      audio.gain.connect(audio.ctx.destination);
+      if(audio.el && audio.el.src){
+        fetch(audio.el.src)
+          .then(function(r){ return r.arrayBuffer(); })
+          .then(function(raw){
+            return new Promise(function(resolve, reject){
+              // The callback form is the one older Safari understands.
+              var out = audio.ctx.decodeAudioData(raw, resolve, reject);
+              if(out && out.then) out.then(resolve, reject);
+            });
+          })
+          .then(function(decoded){ audio.buffer = decoded; })
+          .catch(function(){});           // the element still covers us
+      }
+    }
+    if(audio.ctx.state === "suspended") audio.ctx.resume();
+    return audio.ctx;
+  }
+
   function unlockAudio(){
     if(!audio.el || audio.unlocked) return;
     audio.unlocked = true;                 // claimed up front so nothing races it
@@ -1565,8 +1605,11 @@ tfoot td{ padding-top:14px; }
     else settle();
   }
 
-  document.addEventListener("click", unlockAudio, { capture:true, once:true });
-  document.addEventListener("keydown", unlockAudio, { capture:true, once:true });
+  // Every interaction, not just the first: if a browser suspends the context
+  // while the party is running, the next click quietly revives it.
+  function primeAudio(){ ensureCtx(); unlockAudio(); }
+  document.addEventListener("click", primeAudio, true);
+  document.addEventListener("keydown", primeAudio, true);
 
   var soundPressed = false;
 
@@ -1579,16 +1622,30 @@ tfoot td{ padding-top:14px; }
       playStamp();
       return;
     }
+
     soundPressed = true;
     audio.on = !audio.on;
     labelSound();
     try{ localStorage.setItem("taskmaster-sound", audio.on ? "on" : "off"); }catch(e){}
     if(audio.on) playStamp();          // so you can set the volume before guests arrive
-    else if(audio.el){ audio.el.pause(); audio.el.currentTime = 0; }
+    else stopSting();
   });
 
   function playStamp(){
-    if(!audio.on || !audio.el) return;
+    if(!audio.on) return;
+    var ctx = ensureCtx();
+
+    if(ctx && audio.buffer){
+      if(ctx.state !== "running"){ soundHint(); return; }
+      var source = ctx.createBufferSource();
+      source.buffer = audio.buffer;
+      source.connect(audio.gain);
+      source.start();
+      audio.lastSource = source;
+      return;
+    }
+
+    if(!audio.el) return;
     audio.wantPlay = true;
     audio.el.muted = false;                // the unlock may have left it muted
     try{
