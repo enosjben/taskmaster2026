@@ -251,14 +251,9 @@ h1{ user-select:none; -webkit-user-select:none; }
   align-items:stretch;
 }
 
-.card{
-  flex:1 1 0;
-  min-width:0;
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:clamp(10px, 1.1vw, 16px);
+/* One declaration for both the standings cards and the home ones: the frame
+   is an inlined image, so a second copy would weigh as much as the first. */
+.card, .home-card{
   background:linear-gradient(180deg, #FCFAF4 0%, #F3EDE0 100%);
   /* keep the paper out from under the moulding */
   background-clip:padding-box;
@@ -268,6 +263,15 @@ h1{ user-select:none; -webkit-user-select:none; }
   border-image:url("data:image/png;base64,__FRAME__") 74 round;
   /* the team's colour as the mount inside the frame */
   box-shadow:inset 0 0 0 3px var(--tab), 0 2px 7px rgba(0,0,0,.3);
+}
+.card{
+  flex:1 1 0;
+  min-width:0;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:clamp(10px, 1.1vw, 16px);
   will-change:transform;
 }
 .card.lead{
@@ -372,6 +376,80 @@ h1{ user-select:none; -webkit-user-select:none; }
   font-variant-numeric:tabular-nums;
   color:#FFF3E8;
   text-shadow:0 -1px 0 rgba(90,10,6,.55), 0 2px 2px rgba(60,6,4,.45);
+}
+
+/* ── Home: who is playing, before anything is scored ──────── */
+.home[hidden], .board-view[hidden]{ display:none; }
+.board-view{
+  display:flex;
+  flex-direction:column;
+  gap:clamp(20px, 2.6vw, 38px);
+}
+.home{ display:flex; flex-direction:column; gap:clamp(12px, 1.6vw, 22px); }
+.home-teams{ display:flex; gap:var(--gap); align-items:stretch; }
+.home-card{
+  flex:1 1 0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(8px, 1vw, 14px);
+  padding:clamp(12px, 1.3vw, 20px);
+}
+.home-name{
+  font-family:var(--slab);
+  font-size:clamp(17px, 1.9vw, 30px);
+  line-height:1.05;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--tint);
+  word-break:break-word;
+}
+.home-name:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
+.roster-field{
+  flex:1 1 auto;
+  min-height:5em;
+  width:100%;
+  resize:none;
+  border:none;
+  border-top:1px solid var(--rule-soft);
+  padding:clamp(8px, .9vw, 12px) 0 0;
+  background:transparent;
+  color:var(--ink);
+  font-family:var(--type);
+  font-size:clamp(12px, 1.05vw, 16px);
+  line-height:1.7;
+}
+.roster-field::placeholder{ color:var(--pencil); opacity:.75; }
+.roster-field:focus-visible{ outline:2px solid var(--wax); outline-offset:2px; }
+
+.home-foot{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.begin{
+  appearance:none;
+  border:none;
+  border-radius:2px;
+  background:var(--wax);
+  color:#FFF6EE;
+  font-family:var(--type);
+  font-size:clamp(12px, 1.15vw, 15px);
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  padding:clamp(12px, 1.3vw, 18px) clamp(24px, 3vw, 44px);
+  cursor:pointer;
+  box-shadow:0 4px 14px -4px rgba(124,18,13,.7);
+  user-select:none;
+  -webkit-user-select:none;
+  transition:transform .14s, box-shadow .14s;
+}
+.begin:hover{ transform:translateY(-1px); box-shadow:0 7px 18px -5px rgba(124,18,13,.8); }
+.begin:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+.home-note{
+  margin:0;
+  font-family:var(--type);
+  font-size:clamp(10px, .95vw, 12px);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--pencil);
 }
 
 /* ── Matrix ───────────────────────────────────────────────── */
@@ -618,7 +696,7 @@ tfoot td{ padding-top:14px; }
   }
 
   .envelope{ padding:1.4vh 2vw 5vh; }
-  h1{ font-size:6.6vh; letter-spacing:.05em; }
+  h1{ font-size:6.2vh; letter-spacing:.05em; }
   .flap{ bottom:2.6vh; }
   .envelope::after{ bottom:2.6vh; }
   .wax{ width:7.6vh; height:7.6vh; }
@@ -632,7 +710,16 @@ tfoot td{ padding-top:14px; }
     z-index:3;
     margin:0;
   }
-  .btn{ font-size:1.15vh; padding:.8vh 1vw; }
+  .btn{ font-size:1.05vh; padding:.75vh .7vw; letter-spacing:.14em; }
+
+  .board-view{ flex:1 1 auto; min-height:0; gap:1.2vh; }
+  .home{ flex:1 1 auto; min-height:0; gap:1.6vh; }
+  .home-teams{ flex:1 1 auto; min-height:0; gap:.85vw; }
+  .home-card{ padding:1.6vh 1vw; gap:1.2vh; border-width:2.3vh; }
+  .home-name{ font-size:2.6vh; }
+  .roster-field{ font-size:2.7vh; line-height:1.95; padding-top:1.4vh; }
+  .begin{ font-size:1.5vh; padding:1.8vh 3.4vw; }
+  .home-note{ font-size:1.25vh; }
 
   .standings{ flex:0 0 auto; gap:.85vw; }
   .card{ padding:1.1vh .8vw; gap:.6vh; border-width:2.3vh; }
@@ -726,11 +813,22 @@ tfoot td{ padding-top:14px; }
 
   <div class="controls">
     <button class="btn" id="fullscreen" type="button">Full screen</button>
+    <button class="btn" id="view" type="button">Teams</button>
     <button class="btn" id="sound" type="button">Sound on</button>
     <button class="btn danger" id="reset" type="button">Reset scores</button>
     <span class="link" id="link" hidden>Remote linked</span>
   </div>
 
+  <section class="home" id="home" aria-label="The teams">
+    <p class="section-label">The Teams</p>
+    <div class="home-teams" id="home-teams"></div>
+    <div class="home-foot">
+      <button class="begin" id="begin" type="button">Open the scoreboard</button>
+      <p class="home-note">It opens by itself when the first task is scored.</p>
+    </div>
+  </section>
+
+  <div class="board-view" id="board-view">
   <section class="standings" id="standings" aria-label="Standings"></section>
 
   <section class="matrix-section" aria-label="Task scoring">
@@ -746,7 +844,7 @@ tfoot td{ padding-top:14px; }
       </table>
     </div>
   </section>
-
+  </div>
 
 </div>
 
@@ -780,11 +878,16 @@ tfoot td{ padding-top:14px; }
   function limitFor(r){ return TASKS[r].open ? OPEN_LIMIT : TASKS[r].max; }
 
   var TEAMS = [
-    { name:"Red Team",    tab:"var(--red-tab)", tint:"var(--red-ink)" },
-    { name:"Yellow Team", tab:"var(--yel-tab)", tint:"var(--yel-ink)" },
-    { name:"Green Team",  tab:"var(--grn-tab)", tint:"var(--grn-ink)" },
-    { name:"Blue Team",   tab:"var(--blu-tab)", tint:"var(--blu-ink)" },
-    { name:"Purple Team", tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
+    { name:"Red Team",    tab:"var(--red-tab)", tint:"var(--red-ink)",
+      roster:"Becky\nMichael\nAurora\nLynn" },
+    { name:"Yellow Team", tab:"var(--yel-tab)", tint:"var(--yel-ink)",
+      roster:"Ben\nKiera\nCandace\nFelicity" },
+    { name:"Green Team",  tab:"var(--grn-tab)", tint:"var(--grn-ink)",
+      roster:"Josh\nElena\nJenson\nDaniel" },
+    { name:"Blue Team",   tab:"var(--blu-tab)", tint:"var(--blu-ink)",
+      roster:"Stefanie\nJason\nGlenn" },
+    { name:"Purple Team", tab:"var(--pur-tab)", tint:"var(--pur-ink)",
+      roster:"Ronnie\nAshley\nRoe" }
   ];
 
   // Names saved before "Team" was appended are treated as untouched defaults,
@@ -803,7 +906,7 @@ tfoot td{ padding-top:14px; }
     return {
       title:"Taskmaster",
       seal:"BE",
-      teams:TEAMS.map(function(t){ return { name:t.name, roster:"" }; }),
+      teams:TEAMS.map(function(t){ return { name:t.name, roster:t.roster || "" }; }),
       scores:emptyScores()
     };
   }
@@ -864,6 +967,11 @@ tfoot td{ padding-top:14px; }
 
   var state = load();
 
+  function players(roster){
+    return (roster || "").split(/[\n,]+/).map(function(n){ return n.trim(); })
+                         .filter(function(n){ return n.length; });
+  }
+
   function totalFor(team){
     return state.scores.reduce(function(sum, row){ return sum + (row[team] || 0); }, 0);
   }
@@ -901,7 +1009,7 @@ tfoot td{ padding-top:14px; }
     var nameEl = card.querySelector(".team-name");
     var rosterEl = card.querySelector(".roster");
     nameEl.textContent = state.teams[i].name;
-    rosterEl.textContent = state.teams[i].roster;
+    rosterEl.textContent = players(state.teams[i].roster).join(", ");
     rosterEl.classList.toggle("is-empty", !state.teams[i].roster);
 
     bindEditable(nameEl, function(text){
@@ -1220,6 +1328,9 @@ tfoot td{ padding-top:14px; }
       footEls[i].textContent = totals[i];
     });
 
+    // The first score of the night puts the scoreboard up by itself.
+    if(anyScored && view === "home") setView("board");
+
     document.getElementById("judged").textContent = judged;
 
     reorder(order);
@@ -1227,6 +1338,7 @@ tfoot td{ padding-top:14px; }
 
   // FLIP: the cards re-sort themselves the moment a score lands.
   function reorder(order){
+    if(!cards[0].offsetParent) return;     // the board is not on screen
     var first = cards.map(function(c){ return c.getBoundingClientRect().left; });
     order.forEach(function(entry, idx){ cards[entry.i].style.order = idx; });
     if(REDUCED) return;
@@ -1313,6 +1425,7 @@ tfoot td{ padding-top:14px; }
     }
     disarmReset();
     state.scores = emptyScores();
+    setView("home");
     if(sync.on){
       fetch("api/reset", { method:"POST" })
         .then(function(r){ return r.json(); })
@@ -1328,6 +1441,79 @@ tfoot td{ padding-top:14px; }
   document.addEventListener("keydown", function(ev){
     if(ev.key === "Escape") disarmReset();
   });
+
+  /* ── Home: who is playing ───────────────────────────────── */
+  var homeEl = document.getElementById("home");
+  var boardEl = document.getElementById("board-view");
+  var viewBtn = document.getElementById("view");
+  var homeNames = [], homeRosters = [];
+  var view = "home";
+
+  TEAMS.forEach(function(team, i){
+    var card = document.createElement("article");
+    card.className = "home-card";
+    card.style.setProperty("--tab", team.tab);
+    card.style.setProperty("--tint", team.tint);
+
+    var name = document.createElement("div");
+    name.className = "home-name";
+    name.contentEditable = "true";
+    name.spellcheck = false;
+    name.setAttribute("role", "textbox");
+    name.setAttribute("aria-label", "Team name");
+    name.textContent = state.teams[i].name;
+    bindEditable(name, function(text){
+      state.teams[i].name = text;
+      save();
+      headEls[i].textContent = text || TEAMS[i].name;
+      var cardName = cards[i].querySelector(".team-name");
+      if(document.activeElement !== cardName) cardName.textContent = text;
+    });
+
+    var roster = document.createElement("textarea");
+    roster.className = "roster-field";
+    roster.spellcheck = false;
+    roster.rows = 5;
+    roster.placeholder = "One name per line";
+    roster.setAttribute("aria-label", state.teams[i].name + " players");
+    roster.value = players(state.teams[i].roster).join("\n");
+    roster.addEventListener("input", function(){
+      state.teams[i].roster = roster.value;
+      save();
+      var cardRoster = cards[i].querySelector(".roster");
+      cardRoster.textContent = players(roster.value).join(", ");
+      cardRoster.classList.toggle("is-empty", !players(roster.value).length);
+    });
+
+    card.appendChild(name);
+    card.appendChild(roster);
+    document.getElementById("home-teams").appendChild(card);
+    homeNames.push(name);
+    homeRosters.push(roster);
+  });
+
+  function setView(next){
+    view = next;
+    homeEl.hidden = next !== "home";
+    boardEl.hidden = next === "home";
+    viewBtn.textContent = next === "home" ? "Scoreboard" : "Teams";
+    if(next === "board") render();     // lay the cards out now they are visible
+  }
+
+  document.getElementById("begin").addEventListener("click", function(){ setView("board"); });
+  viewBtn.addEventListener("click", function(){
+    setView(view === "home" ? "board" : "home");
+  });
+
+  // Keep the home screen in step when the phone or another edit changes names.
+  function syncHome(){
+    state.teams.forEach(function(team, i){
+      if(document.activeElement !== homeNames[i]) homeNames[i].textContent = team.name;
+      if(document.activeElement !== homeRosters[i]){
+        homeRosters[i].value = players(team.roster).join("\n");
+      }
+    });
+  }
 
   /* ── The sound of a round landing ───────────────────────── */
   var audio = {
@@ -1444,6 +1630,7 @@ tfoot td{ padding-top:14px; }
     }
 
     syncEditables();
+    syncHome();
     render();
 
     if(!REDUCED){
@@ -1469,7 +1656,7 @@ tfoot td{ padding-top:14px; }
         headEls[i].textContent = state.teams[i].name || TEAMS[i].name;
       }
       if(document.activeElement !== rosterEl){
-        rosterEl.textContent = state.teams[i].roster;
+        rosterEl.textContent = players(state.teams[i].roster).join(", ");
         rosterEl.classList.toggle("is-empty", !state.teams[i].roster);
       }
     });
@@ -1503,6 +1690,10 @@ tfoot td{ padding-top:14px; }
       })
       .catch(function(){});
   }
+
+  setView(state.scores.some(function(row){
+    return row.some(function(v){ return v !== null; });
+  }) ? "board" : "home");
 
   render();
 })();

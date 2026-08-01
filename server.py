@@ -41,7 +41,14 @@ TASKS = [
     ("Commercial", 5, False),
     ("Relay", 15, True),
 ]
-TEAMS = ["Red Team", "Yellow Team", "Green Team", "Blue Team", "Purple Team"]
+# Name and starting squad. Both are editable on the board's home screen.
+TEAMS = [
+    ("Red Team", "Becky\nMichael\nAurora\nLynn"),
+    ("Yellow Team", "Ben\nKiera\nCandace\nFelicity"),
+    ("Green Team", "Josh\nElena\nJenson\nDaniel"),
+    ("Blue Team", "Stefanie\nJason\nGlenn"),
+    ("Purple Team", "Ronnie\nAshley\nRoe"),
+]
 
 _lock = threading.Lock()
 _subscribers = set()
@@ -51,7 +58,7 @@ def blank_state():
     return {
         "title": "Taskmaster",
         "seal": "BE",
-        "teams": [{"name": n, "roster": ""} for n in TEAMS],
+        "teams": [{"name": n, "roster": r} for n, r in TEAMS],
         "scores": [[None] * len(TEAMS) for _ in TASKS],
         "rev": 0,
     }

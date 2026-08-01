@@ -25,6 +25,18 @@ on any 16:9 display, 1080p or 4K. Windows narrower than 1100px or shorter than
 620px fall back to a taller scrolling layout, which is what you get on a phone
 or a small laptop window.
 
+## The home screen
+
+Before anything is scored the board shows the team sheet: five framed squads
+with everyone's name, big enough to read across a room. Names and players are
+editable there — one player per line — and edits flow straight through to the
+scoreboard and the phone.
+
+**Open the scoreboard** moves on when you're ready, and the board opens by
+itself the moment the first task is scored, so you can leave the team sheet up
+while people arrive. The **Teams** button brings it back at any point, and
+**Reset scores** returns to it for a fresh night.
+
 ## Using it during the party
 
 - **Award points** — click any square and pick a number, or focus a square and
@@ -39,9 +51,10 @@ or a small laptop window.
 - **Task names stay sealed** until a task is being scored. Until then the board
   shows only its number, so nobody watching the TV learns what is coming. Your
   phone always shows every name, because you need them.
-- **Team names and player lists are click-to-edit.** The wordmark and the
-  wax seal are fixed, and cannot be selected or altered by a passing guest —
-  change them in `src/index.template.html` and rebuild.
+- **Team names and player lists are click-to-edit**, on the home screen or on
+  the standings cards. The wordmark and the wax seal are fixed, and cannot be
+  selected or altered by a passing guest — change them in
+  `src/index.template.html` and rebuild.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
 - **Totals sit on wax seals** under each framed team, as they do on the show.
@@ -114,9 +127,11 @@ Both are declared at the top of the script in `src/index.template.html` as
 follow — nothing else is hard-coded to nine or five. Give a task a `max` to
 change what it is scored out of, as the relay does; leave it off for 5.
 
-Note that team names typed into the page are saved and will override the
-defaults on that browser; use **Reset scores** or clear the site's local
-storage if you change `TEAMS` and want the new names to show.
+Starting squads live alongside the team names, in `TEAMS` in the page and in
+`server.py` — both, since whichever is holding the night seeds the other. Names
+and players typed into the page are saved and will override those defaults;
+delete `party-state.json` (or clear the site's local storage when running
+without the server) if you change them in the source and want the new ones.
 
 ## Building
 
