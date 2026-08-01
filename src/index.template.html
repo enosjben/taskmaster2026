@@ -395,10 +395,17 @@ h1{ user-select:none; -webkit-user-select:none; }
   gap:clamp(8px, 1vw, 14px);
   padding:clamp(12px, 1.3vw, 20px);
 }
+/* Two lines' worth of room whether the name needs one or two, so the rule
+   under it — and every player list — starts at the same height across all
+   five frames however narrow the window gets. */
 .home-name{
   font-family:var(--slab);
   font-size:clamp(17px, 1.9vw, 30px);
-  line-height:1.05;
+  line-height:1.15;
+  min-height:2.3em;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   letter-spacing:.02em;
   text-transform:uppercase;
   color:var(--tint);
@@ -1477,6 +1484,9 @@ tfoot td{ padding-top:14px; }
     var roster = document.createElement("textarea");
     roster.className = "roster-field";
     roster.spellcheck = false;
+    roster.setAttribute("data-gramm", "false");
+    roster.setAttribute("data-gramm_editor", "false");
+    roster.setAttribute("data-enable-grammarly", "false");
     roster.rows = 5;
     roster.placeholder = "One name per line";
     roster.setAttribute("aria-label", state.teams[i].name + " players");
