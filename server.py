@@ -27,17 +27,19 @@ SAVE = ROOT / "party-state.json"
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 
-# Mirrors TASKS in the pages. The relay is the finale and is worth more.
+# Mirrors TASKS in the pages: (name, buttons up to, open-ended). The relay is
+# the finale, worth more, and open-ended in case it runs away with itself.
+OPEN_LIMIT = 999
 TASKS = [
-    ("Longest Line", 5),
-    ("Coolest Phone Photo", 5),
-    ("Recreate Phone Photo", 5),
-    ("Treasure Hunt", 5),
-    ("Hit Song", 5),
-    ("Museum Piece", 5),
-    ("Painting", 5),
-    ("Commercial", 5),
-    ("Relay", 15),
+    ("Longest Line", 5, False),
+    ("Coolest Phone Photo", 5, False),
+    ("Recreate Phone Photo", 5, False),
+    ("Treasure Hunt", 5, False),
+    ("Hit Song", 5, False),
+    ("Museum Piece", 5, False),
+    ("Painting", 5, False),
+    ("Commercial", 5, False),
+    ("Relay", 15, True),
 ]
 TEAMS = ["Red Team", "Yellow Team", "Green Team", "Blue Team", "Purple Team"]
 
@@ -80,8 +82,10 @@ def load_state():
 
 
 def valid(task_index, value):
-    return isinstance(value, int) and not isinstance(value, bool) \
-        and 0 <= value <= TASKS[task_index][1]
+    if not isinstance(value, int) or isinstance(value, bool):
+        return False
+    name, buttons, open_ended = TASKS[task_index]
+    return 0 <= value <= (OPEN_LIMIT if open_ended else buttons)
 
 
 STATE = load_state()
@@ -192,7 +196,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json(STATE)
         elif path == "/api/tasks":
             self._json({
-                "tasks": [{"name": n, "max": m} for n, m in TASKS],
+                "tasks": [{"name": n, "max": m, "open": o} for n, m, o in TASKS],
                 "teams": STATE["teams"],
             })
         elif path == "/api/events":

@@ -31,14 +31,19 @@ or a small laptop window.
   type the score. Backspace clears it. Arrow keys move around the grid.
   Five points to the team the Taskmaster likes best, down to one for the team
   he likes least, and zero for disqualification.
-- **The finale is out of 15**, not 5, because the relay is anyone's game. Its
-  picker runs 0–15, and typing works by combining digits pressed in quick
-  succession, so `1` then `5` gives 15. Any other task refuses anything above
-  its own maximum.
+- **The finale is open-ended.** The relay shows buttons up to 15, but its
+  picker also has a field for any number at all, in case a team runs away with
+  it. Typing into a cell works too — digits pressed in quick succession
+  combine, so `1` then `5` gives 15 and `2` then `4` gives 24. Every other task
+  still refuses anything above five.
+- **Task names stay sealed** until a task is being scored. Until then the board
+  shows only its number, so nobody watching the TV learns what is coming. Your
+  phone always shows every name, because you need them.
 - **Edit anything** — the title, the initials on the wax seal, team names and
   player lists are all click-to-edit.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
+- **Totals sit on wax seals** under each framed team, as they do on the show.
 - **Champion** is stamped on the leader only once all nine tasks are judged.
 - **Reset scores** clears the grid but keeps names. It asks twice: the first
   press arms the button, the second clears. Clicking elsewhere, pressing

@@ -211,6 +211,34 @@ h1{
    their space back from button height instead. */
 .picks{ display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; }
 .picks[data-wide="1"] .pick{ min-height:40px; font-size:16px; }
+
+/* open-ended tasks: the buttons cover the usual range, this covers the rest */
+.custom{ display:flex; gap:6px; margin-top:6px; }
+.custom input{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:46px;
+  padding:0 10px;
+  border:1px solid var(--rule);
+  border-radius:2px;
+  background:#FFFDF7;
+  color:var(--ink);
+  font-family:var(--slab);
+  font-size:18px;
+  text-align:center;
+}
+.custom input::placeholder{
+  font-family:var(--type);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+.custom input[data-active="1"]{
+  background:var(--tab);
+  border-color:var(--tab);
+  color:#FFFDF7;
+}
 .pick{
   appearance:none;
   min-height:46px;
@@ -477,6 +505,47 @@ h1{
 
       row.appendChild(head);
       row.appendChild(picks);
+
+      if(tasks[current].open){
+        var custom = document.createElement("div");
+        custom.className = "custom";
+        var field = document.createElement("input");
+        field.type = "text";
+        field.inputMode = "numeric";
+        field.autocomplete = "off";
+        field.placeholder = "or type any score";
+        field.setAttribute("aria-label", teamName(i) + " — type any score");
+        // Only show a value here when it is beyond what the buttons offer.
+        if(typeof draft[i] === "number" && draft[i] > max){
+          field.value = draft[i];
+          field.setAttribute("data-active", "1");
+        }
+        field.addEventListener("input", function(){
+          field.value = field.value.replace(/[^0-9]/g, "").slice(0, 3);
+          if(field.value === ""){
+            draft[i] = null;
+            field.removeAttribute("data-active");
+          }else{
+            draft[i] = Math.min(999, parseInt(field.value, 10));
+            field.setAttribute("data-active", "1");
+          }
+          picks.querySelectorAll(".pick").forEach(function(other, idx){
+            other.setAttribute("aria-pressed", draft[i] === idx ? "true" : "false");
+          });
+          updateSubmit();
+        });
+        custom.appendChild(field);
+        row.appendChild(custom);
+
+        // Tapping a button clears whatever was typed for that team.
+        picks.addEventListener("click", function(){
+          if(draft[i] === null || draft[i] <= max){
+            field.value = "";
+            field.removeAttribute("data-active");
+          }
+        });
+      }
+
       rowsEl.appendChild(row);
     });
   }
