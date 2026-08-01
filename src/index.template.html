@@ -243,18 +243,9 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 .card-top{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:8px;
+  justify-content:flex-end;
   min-height:clamp(28px, 3vw, 40px);
 }
-
-.rank{
-  font-family:var(--slab);
-  font-size:clamp(13px, 1.3vw, 18px);
-  color:var(--pencil);
-  letter-spacing:.04em;
-}
-.card.lead .rank{ color:var(--ink); }
 
 /* the golden head goes to whoever is winning */
 .trophy{
@@ -561,7 +552,6 @@ tfoot td{ padding-top:14px; }
   .standings{ flex:0 0 auto; gap:.85vw; }
   .card{ padding:1.2vh .9vw; gap:.75vh; border-top-width:.55vh; }
   .card-top{ min-height:3.6vh; }
-  .rank{ font-size:1.9vh; }
   .trophy{ width:3.7vh; }
   .team-name{ font-size:2.8vh; }
   .roster{ font-size:1.45vh; min-height:1.5em; }
@@ -701,7 +691,6 @@ tfoot td{ padding-top:14px; }
     { name:"Purple", tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
   ];
 
-  var ROMAN = ["I","II","III","IV","V"];
   var NT = TASKS.length, NP = TEAMS.length;
   var KEY = "taskmaster-scoreboard-v1";
   var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -782,7 +771,7 @@ tfoot td{ padding-top:14px; }
     card.style.setProperty("--tab", team.tab);
     card.style.setProperty("--tint", team.tint);
     card.innerHTML =
-      '<div class="card-top"><span class="rank"></span>' +
+      '<div class="card-top">' +
         '<svg class="trophy" viewBox="0 0 24 30" role="img" aria-label="Holds the golden head"><use href="#golden-head"/></svg>' +
       '</div>' +
       '<div class="team-name" contenteditable="true" spellcheck="false" role="textbox" aria-label="Team name"></div>' +
@@ -1020,20 +1009,12 @@ tfoot td{ padding-top:14px; }
       });
     });
 
-    // Equal totals share a rank, then the next rank skips: 1, 1, 3…
     var order = totals.map(function(t, i){ return { i:i, total:t }; })
                       .sort(function(a, b){ return b.total - a.total; });
-    var ranks = [];
-    order.forEach(function(entry, idx){
-      ranks[entry.i] = (idx > 0 && entry.total === order[idx - 1].total)
-        ? ranks[order[idx - 1].i]
-        : idx + 1;
-    });
 
     cards.forEach(function(card, i){
       card.classList.toggle("lead", anyScored && totals[i] === leadScore);
       card.classList.toggle("champion", judged === NT && totals[i] === leadScore);
-      card.querySelector(".rank").textContent = anyScored ? ROMAN[ranks[i] - 1] : "—";
       card.querySelector(".total").textContent = totals[i];
       footEls[i].textContent = totals[i];
     });
