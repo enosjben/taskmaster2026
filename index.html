@@ -217,6 +217,29 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
   background:var(--wax);
 }
 
+/* the attribute alone loses to the class's display, so say it explicitly */
+.link[hidden]{ display:none; }
+.link{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-family:var(--type);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--grn-ink);
+}
+.link::before{
+  content:"";
+  width:8px; height:8px;
+  border-radius:50%;
+  background:var(--grn-tab);
+  box-shadow:0 0 0 3px rgba(76,154,69,.2);
+}
+.link[data-state="lost"]{ color:var(--pencil); }
+.link[data-state="lost"]::before{ background:var(--pencil); box-shadow:none; }
+
 /* ── Standings: five filing cards ─────────────────────────── */
 .standings{
   display:flex;
@@ -651,6 +674,7 @@ tfoot td{ padding-top:14px; }
   <div class="controls">
     <button class="btn" id="fullscreen" type="button">Full screen</button>
     <button class="btn danger" id="reset" type="button">Reset scores</button>
+    <span class="link" id="link" hidden>Remote linked</span>
   </div>
 
   <section class="standings" id="standings" aria-label="Standings"></section>
@@ -749,8 +773,31 @@ tfoot td{ padding-top:14px; }
     return fresh;
   }
 
+  // When the page is served by server.py the night lives on the server, so the
+  // phone remote and this board stay in step. Opened straight from disk there
+  // is no server to find, and local storage keeps the night exactly as before.
+  var sync = { on:false, ownRev:-1, timer:null };
+
   function save(){
+    if(sync.on){ push(); return; }
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function push(){
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(function(){
+      fetch("api/state", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({
+          title:state.title, seal:state.seal,
+          teams:state.teams, scores:state.scores
+        })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(res){ sync.ownRev = res.rev; })
+      .catch(function(){});
+    }, 120);
   }
 
   var state = load();
@@ -1147,7 +1194,14 @@ tfoot td{ padding-top:14px; }
     }
     disarmReset();
     state.scores = emptyScores();
-    save();
+    if(sync.on){
+      fetch("api/reset", { method:"POST" })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ sync.ownRev = res.rev; })
+        .catch(function(){});
+    }else{
+      save();
+    }
     render();
   });
 
@@ -1155,6 +1209,98 @@ tfoot td{ padding-top:14px; }
   document.addEventListener("keydown", function(ev){
     if(ev.key === "Escape") disarmReset();
   });
+
+  /* ── Live sync with the phone remote ────────────────────── */
+  var linkEl = document.getElementById("link");
+
+  function applyRemote(remote){
+    if(!remote || typeof remote !== "object") return;
+    if(remote.rev === sync.ownRev) return;             // our own change, echoed
+
+    if(typeof remote.title === "string") state.title = remote.title;
+    if(typeof remote.seal === "string") state.seal = remote.seal;
+    if(Array.isArray(remote.teams)){
+      remote.teams.slice(0, NP).forEach(function(t, i){
+        if(!t) return;
+        if(typeof t.name === "string") state.teams[i].name = t.name;
+        if(typeof t.roster === "string") state.teams[i].roster = t.roster;
+      });
+    }
+
+    // Collect what actually moved, so a whole round lands as one flourish
+    // and an echo of our own edit does not replay the animation.
+    var landed = [];
+    if(Array.isArray(remote.scores)){
+      remote.scores.slice(0, NT).forEach(function(row, r){
+        if(!Array.isArray(row)) return;
+        row.slice(0, NP).forEach(function(v, c){
+          var value = (typeof v === "number" && v >= 0 && v <= TASKS[r].max) ? v : null;
+          if(state.scores[r][c] !== value){
+            state.scores[r][c] = value;
+            if(value !== null) landed.push(cells[r][c]);
+          }
+        });
+      });
+    }
+
+    syncEditables();
+    render();
+
+    if(!REDUCED){
+      landed.forEach(function(btn){
+        btn.classList.remove("stamped");
+        void btn.offsetWidth;
+        btn.classList.add("stamped");
+      });
+    }
+  }
+
+  // Never overwrite a field somebody on this machine is part-way through typing.
+  function syncEditables(){
+    if(document.activeElement !== titleEl) titleEl.textContent = state.title;
+    if(document.activeElement !== sealEl) sealEl.textContent = state.seal;
+    cards.forEach(function(card, i){
+      var nameEl = card.querySelector(".team-name");
+      var rosterEl = card.querySelector(".roster");
+      if(document.activeElement !== nameEl){
+        nameEl.textContent = state.teams[i].name;
+        headEls[i].textContent = state.teams[i].name || TEAMS[i].name;
+      }
+      if(document.activeElement !== rosterEl){
+        rosterEl.textContent = state.teams[i].roster;
+        rosterEl.classList.toggle("is-empty", !state.teams[i].roster);
+      }
+    });
+  }
+
+  function setLink(on, lost){
+    sync.on = on;
+    linkEl.hidden = !on;
+    if(on) linkEl.setAttribute("data-state", lost ? "lost" : "live");
+    linkEl.textContent = lost ? "Reconnecting" : "Remote linked";
+  }
+
+  function openStream(){
+    var es = new EventSource("api/events");
+    es.onmessage = function(ev){
+      setLink(true, false);
+      try{ applyRemote(JSON.parse(ev.data)); }catch(e){}
+    };
+    es.onerror = function(){ setLink(true, true); };   // EventSource retries
+  }
+
+  // Only look for a server when one could exist; a page opened from disk, or
+  // embedded somewhere that blocks the request, quietly stays standalone.
+  if(/^https?:$/.test(location.protocol)){
+    fetch("api/state", { cache:"no-store" })
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error("no server")); })
+      .then(function(remote){
+        setLink(true, false);
+        applyRemote(remote);
+        openStream();
+      })
+      .catch(function(){});
+  }
 
   render();
 })();

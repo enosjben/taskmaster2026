@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#35200F">
+<title>Taskmaster — Remote</title>
+<style>
+@font-face{
+  font-family:"Bevan";
+  font-style:normal; font-weight:400; font-display:block;
+  src:url(data:font/woff2;base64,__BEVAN_400__) format("woff2");
+}
+@font-face{
+  font-family:"Veteran Typewriter";
+  font-style:normal; font-weight:400; font-display:block;
+  src:url(data:font/woff2;base64,__VETERAN__) format("woff2");
+}
+
+/* The board's world, rebuilt for a thumb: same paper and ink, but every
+   target is big enough to hit while holding a drink. */
+:root{
+  --desk-deep:  #35200F;
+  --paper:      #F4EFE3;
+  --paper-warm: #EDE6D6;
+  --paper-edge: #DCD3BE;
+  --ink:        #1A1714;
+  --ink-soft:   #4A4238;
+  --pencil:     #8B8071;
+  --rule:       #C7BCA4;
+  --rule-soft:  #DFD6C2;
+  --wax:        #B4241C;
+
+  --red-tab:    #D23A2E;  --red-ink:    #A82A20;
+  --yel-tab:    #EFC01E;  --yel-ink:    #8A6408;
+  --grn-tab:    #4C9A45;  --grn-ink:    #37702F;
+  --blu-tab:    #3A72BC;  --blu-ink:    #2B5391;
+  --pur-tab:    #8C55A8;  --pur-ink:    #6A3D85;
+
+  --slab: "Bevan", Rockwell, Clarendon, Georgia, serif;
+  --type: "Veteran Typewriter", "Courier New", ui-monospace, monospace;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html{ background:var(--desk-deep); }
+
+body{
+  margin:0;
+  min-height:100dvh;
+  font-family:var(--type);
+  color:var(--ink);
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(255,214,150,.22), rgba(255,214,150,0) 60%),
+    radial-gradient(100% 70% at 50% 40%, #7A5230 0%, #4E3018 60%, #2C1A0C 100%);
+  padding:max(10px, env(safe-area-inset-top)) 10px calc(96px + env(safe-area-inset-bottom));
+}
+
+.sheet{
+  max-width:640px;
+  margin:0 auto;
+  background:linear-gradient(180deg, var(--paper) 0%, var(--paper-warm) 100%);
+  box-shadow:0 10px 30px -12px rgba(0,0,0,.7);
+  padding:16px 14px 20px;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:12px;
+  border-bottom:2px solid var(--rule);
+}
+h1{
+  margin:0;
+  font-family:var(--type);
+  font-weight:700;
+  font-size:clamp(19px, 6vw, 26px);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  line-height:1;
+}
+.link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--grn-ink);
+  white-space:nowrap;
+}
+.link::before{
+  content:"";
+  width:8px; height:8px;
+  border-radius:50%;
+  background:var(--grn-tab);
+}
+.link[data-state="lost"]{ color:var(--wax); }
+.link[data-state="lost"]::before{ background:var(--wax); }
+
+/* ── Task picker ──────────────────────────────────────────── */
+.section-label{
+  margin:16px 0 8px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--pencil);
+}
+
+.tasks{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding-bottom:6px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+}
+.task-pick{
+  flex:0 0 auto;
+  scroll-snap-align:start;
+  appearance:none;
+  border:1px solid var(--rule);
+  background:#FCFAF4;
+  border-radius:2px;
+  padding:9px 12px;
+  font-family:var(--type);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.task-pick .n{ font-family:var(--slab); color:var(--pencil); font-size:13px; }
+.task-pick[aria-pressed="true"]{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:var(--paper);
+}
+.task-pick[aria-pressed="true"] .n{ color:var(--paper); }
+.task-pick[data-judged="1"]::after{
+  content:"\2713";
+  color:var(--grn-tab);
+  font-weight:700;
+}
+.task-pick[aria-pressed="true"][data-judged="1"]::after{ color:#8ED486; }
+
+.now{
+  margin:14px 0 4px;
+  font-family:var(--slab);
+  font-size:clamp(21px, 6.6vw, 30px);
+  line-height:1.1;
+  text-transform:uppercase;
+}
+.now small{
+  display:block;
+  margin-top:5px;
+  font-family:var(--type);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.18em;
+  color:var(--wax);
+  text-transform:uppercase;
+}
+
+/* ── Score rows ───────────────────────────────────────────── */
+.rows{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+
+.row{
+  border:1px solid var(--paper-edge);
+  border-left:6px solid var(--tab);
+  background:#FCFAF4;
+  padding:10px 10px 12px;
+}
+.row-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:9px;
+}
+.row-name{
+  font-family:var(--slab);
+  font-size:15px;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--tint);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.row-total{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--pencil);
+  white-space:nowrap;
+}
+
+/* Always six across: full-width targets matter more than saving a row, and
+   the finale is the round you least want a mis-tap on. Its extra rows buy
+   their space back from button height instead. */
+.picks{ display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; }
+.picks[data-wide="1"] .pick{ min-height:40px; font-size:16px; }
+.pick{
+  appearance:none;
+  min-height:46px;
+  border:1px solid var(--rule-soft);
+  padding:0;
+  border-radius:2px;
+  background:#FFFDF7;
+  color:var(--ink);
+  font-family:var(--slab);
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.pick[aria-pressed="true"]{
+  background:var(--tab);
+  border-color:var(--tab);
+  color:#FFFDF7;
+}
+.pick:active{ transform:scale(.94); }
+
+/* ── Submit ───────────────────────────────────────────────── */
+.submit-bar{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg, rgba(40,25,12,0), rgba(40,25,12,.92) 40%);
+  display:flex;
+  justify-content:center;
+}
+.submit{
+  appearance:none;
+  width:100%;
+  max-width:616px;
+  min-height:56px;
+  border:none;
+  border-radius:2px;
+  background:var(--wax);
+  color:#FFF6EE;
+  font-family:var(--type);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 6px 18px -6px rgba(0,0,0,.8);
+  touch-action:manipulation;
+}
+.submit[disabled]{
+  background:#B9AF9B;
+  color:#F4EFE3;
+  box-shadow:none;
+}
+.submit.sent{ background:var(--grn-tab); }
+
+/* ── Standings strip ──────────────────────────────────────── */
+.standings{
+  display:flex;
+  gap:6px;
+  margin-top:18px;
+  padding-top:14px;
+  border-top:2px solid var(--rule);
+}
+.stand{
+  flex:1 1 0;
+  min-width:0;
+  text-align:center;
+  border-top:4px solid var(--tab);
+  padding-top:7px;
+}
+.stand b{
+  display:block;
+  font-family:var(--slab);
+  font-size:20px;
+  color:var(--ink);
+  font-weight:400;
+}
+.stand span{
+  display:block;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--tint);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.stand[data-lead="1"] b{ color:var(--wax); }
+
+.offline{
+  margin-top:14px;
+  padding:10px;
+  border:1px solid var(--wax);
+  color:var(--wax);
+  font-size:12px;
+  line-height:1.5;
+}
+.offline[hidden]{ display:none; }
+
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header>
+    <h1>Taskmaster</h1>
+    <span class="link" id="link" data-state="live">Linked</span>
+  </header>
+
+  <p class="section-label">Choose a task</p>
+  <div class="tasks" id="tasks"></div>
+
+  <h2 class="now" id="now"></h2>
+
+  <div class="rows" id="rows"></div>
+
+  <p class="section-label">Standings</p>
+  <div class="standings" id="standings"></div>
+
+  <div class="offline" id="offline" hidden>
+    Lost the connection to the laptop. Scores you submit now will not arrive —
+    check you are still on the same wifi.
+  </div>
+
+</div>
+
+<div class="submit-bar">
+  <button class="submit" id="submit" type="button" disabled>Submit round</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TEAM_STYLE = [
+    { tab:"var(--red-tab)", tint:"var(--red-ink)" },
+    { tab:"var(--yel-tab)", tint:"var(--yel-ink)" },
+    { tab:"var(--grn-tab)", tint:"var(--grn-ink)" },
+    { tab:"var(--blu-tab)", tint:"var(--blu-ink)" },
+    { tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
+  ];
+  var FLAGS = { 5:"Prize task", 8:"Finale" };
+
+  var tasks = [];            // [{name, max}]
+  var state = null;          // last state from the server
+  var current = 0;           // task being scored
+  var draft = [];            // staged scores, not sent until Submit
+  var connected = true;
+
+  var tasksEl = document.getElementById("tasks");
+  var rowsEl = document.getElementById("rows");
+  var nowEl = document.getElementById("now");
+  var standEl = document.getElementById("standings");
+  var submitEl = document.getElementById("submit");
+  var linkEl = document.getElementById("link");
+  var offlineEl = document.getElementById("offline");
+
+  function teamName(i){
+    return (state && state.teams[i] && state.teams[i].name) || "Team " + (i + 1);
+  }
+
+  function totalFor(i){
+    return state.scores.reduce(function(sum, row){ return sum + (row[i] || 0); }, 0);
+  }
+
+  function judged(r){
+    return state.scores[r].every(function(v){ return v !== null; });
+  }
+
+  /* ── Draft: staged locally so a round lands in one go ────── */
+  function loadDraft(){
+    draft = state.scores[current].slice();
+    renderRows();
+    renderTasks();
+    updateSubmit();
+  }
+
+  function updateSubmit(){
+    var set = draft.filter(function(v){ return v !== null; }).length;
+    var ready = set === TEAM_STYLE.length;
+    submitEl.disabled = !ready;
+    submitEl.classList.remove("sent");
+    submitEl.textContent = ready
+      ? "Submit round " + (current + 1)
+      : set + " of " + TEAM_STYLE.length + " scored";
+  }
+
+  /* ── Rendering ───────────────────────────────────────────── */
+  function renderTasks(){
+    tasksEl.innerHTML = "";
+    tasks.forEach(function(task, r){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "task-pick";
+      b.setAttribute("aria-pressed", r === current ? "true" : "false");
+      b.setAttribute("data-judged", judged(r) ? "1" : "0");
+      b.innerHTML = '<span class="n">' + (r + 1) + "</span>";
+      b.appendChild(document.createTextNode(task.name));
+      b.addEventListener("click", function(){
+        current = r;
+        loadDraft();
+        b.scrollIntoView({ block:"nearest", inline:"center", behavior:"smooth" });
+      });
+      tasksEl.appendChild(b);
+    });
+  }
+
+  function renderNow(){
+    nowEl.textContent = (current + 1) + ". " + tasks[current].name;
+    if(FLAGS[current] || tasks[current].max !== 5){
+      var small = document.createElement("small");
+      small.textContent = [FLAGS[current], "out of " + tasks[current].max]
+        .filter(Boolean).join(" · ");
+      nowEl.appendChild(small);
+    }
+  }
+
+  function renderRows(){
+    renderNow();
+    rowsEl.innerHTML = "";
+    var max = tasks[current].max;
+
+    TEAM_STYLE.forEach(function(style, i){
+      var row = document.createElement("div");
+      row.className = "row";
+      row.style.setProperty("--tab", style.tab);
+      row.style.setProperty("--tint", style.tint);
+
+      var head = document.createElement("div");
+      head.className = "row-head";
+      var name = document.createElement("span");
+      name.className = "row-name";
+      name.textContent = teamName(i);
+      var total = document.createElement("span");
+      total.className = "row-total";
+      total.textContent = totalFor(i) + " pts";
+      head.appendChild(name);
+      head.appendChild(total);
+
+      var picks = document.createElement("div");
+      picks.className = "picks";
+      if(max > 5) picks.setAttribute("data-wide", "1");
+      for(var v = 0; v <= max; v++){
+        (function(value){
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "pick";
+          b.textContent = value;
+          b.setAttribute("aria-pressed", draft[i] === value ? "true" : "false");
+          b.addEventListener("click", function(){
+            draft[i] = (draft[i] === value) ? null : value;
+            picks.querySelectorAll(".pick").forEach(function(other, idx){
+              other.setAttribute("aria-pressed", draft[i] === idx ? "true" : "false");
+            });
+            updateSubmit();
+          });
+          picks.appendChild(b);
+        })(v);
+      }
+
+      row.appendChild(head);
+      row.appendChild(picks);
+      rowsEl.appendChild(row);
+    });
+  }
+
+  function renderStandings(){
+    var totals = TEAM_STYLE.map(function(_, i){ return totalFor(i); });
+    var lead = Math.max.apply(null, totals);
+    standEl.innerHTML = "";
+    TEAM_STYLE.forEach(function(style, i){
+      var d = document.createElement("div");
+      d.className = "stand";
+      d.style.setProperty("--tab", style.tab);
+      d.style.setProperty("--tint", style.tint);
+      if(lead > 0 && totals[i] === lead) d.setAttribute("data-lead", "1");
+      d.innerHTML = "<b>" + totals[i] + "</b>";
+      var s = document.createElement("span");
+      s.textContent = teamName(i).replace(/\s*team$/i, "");
+      d.appendChild(s);
+      standEl.appendChild(d);
+    });
+  }
+
+  function setLink(ok){
+    connected = ok;
+    linkEl.setAttribute("data-state", ok ? "live" : "lost");
+    linkEl.textContent = ok ? "Linked" : "Offline";
+    offlineEl.hidden = ok;
+  }
+
+  /* ── Submitting a whole round ────────────────────────────── */
+  submitEl.addEventListener("click", function(){
+    if(submitEl.disabled) return;
+    var task = current;
+    var payload = draft.slice();
+    submitEl.disabled = true;
+    submitEl.textContent = "Sending…";
+
+    fetch("api/round", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ task:task, scores:payload })
+    })
+    .then(function(r){ if(!r.ok) throw new Error("rejected"); return r.json(); })
+    .then(function(){
+      setLink(true);
+      submitEl.classList.add("sent");
+      submitEl.textContent = "Round " + (task + 1) + " on the board";
+      // Move on to the next unjudged task, which is usually where you are headed.
+      setTimeout(function(){
+        var next = -1;
+        for(var r = 0; r < tasks.length; r++){
+          var i = (task + 1 + r) % tasks.length;
+          if(!judged(i)){ next = i; break; }
+        }
+        if(next >= 0 && next !== current){ current = next; }
+        loadDraft();
+      }, 1100);
+    })
+    .catch(function(){
+      setLink(false);
+      submitEl.disabled = false;
+      submitEl.textContent = "Failed — tap to retry";
+    });
+  });
+
+  /* ── Talking to the laptop ───────────────────────────────── */
+  function applyState(next){
+    var first = state === null;
+    state = next;
+    if(first){
+      // Start on the first task nobody has judged yet.
+      current = 0;
+      for(var r = 0; r < tasks.length; r++){
+        if(!judged(r)){ current = r; break; }
+      }
+      loadDraft();
+    }else{
+      renderTasks();
+      // Keep whatever is part-scored on screen; only refresh what is around it.
+      rowsEl.querySelectorAll(".row-total").forEach(function(el, i){
+        el.textContent = totalFor(i) + " pts";
+      });
+      rowsEl.querySelectorAll(".row-name").forEach(function(el, i){
+        el.textContent = teamName(i);
+      });
+    }
+    renderStandings();
+  }
+
+  function start(){
+    fetch("api/tasks", { cache:"no-store" })
+      .then(function(r){ return r.json(); })
+      .then(function(cfg){
+        tasks = cfg.tasks;
+        return fetch("api/state", { cache:"no-store" });
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(s){
+        applyState(s);
+        var es = new EventSource("api/events");
+        es.onmessage = function(ev){
+          setLink(true);
+          try{ applyState(JSON.parse(ev.data)); }catch(e){}
+        };
+        es.onerror = function(){ setLink(false); };
+      })
+      .catch(function(){
+        setLink(false);
+        nowEl.textContent = "Cannot reach the laptop";
+      });
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

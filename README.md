@@ -45,10 +45,39 @@ or a small laptop window.
   Escape, or waiting five seconds cancels. It deliberately avoids a browser
   confirm dialog, which a sandboxed page suppresses.
 
-Everything saves to the browser's local storage as you go, so a refresh or an
-accidentally closed tab won't lose the night. Scores live in that one browser
-on that one machine — this is a scoreboard, not a synced app, so run it from a
-single laptop.
+Opened straight from disk, everything saves to that browser's local storage as
+you go, so a refresh or a closed tab won't lose the night. To score from your
+phone instead, run the server below.
+
+## Scoring from your phone
+
+Run this on the laptop driving the TV:
+
+```
+python3 server.py
+```
+
+It prints two addresses. Open the first on the laptop (that's the board you
+AirPlay or cast), and the second on your phone. Both devices need to be on the
+same wifi; nothing leaves your network and no accounts are involved.
+
+On the phone you pick a task, tap a score for each of the five teams, and press
+**Submit round**. The whole round lands on the TV at once, rather than
+appearing one team at a time as you tap. Submit stays disabled until all five
+teams have a score, so a half-finished round can't go up by accident, and after
+a successful submit the phone moves itself to the next unjudged task.
+
+It works both ways: rename a team or type a score on the laptop and the phone
+updates too. A small **Remote linked** marker appears on the board while a
+server is attached. If the phone loses wifi it says so rather than silently
+dropping scores.
+
+Scores live on the laptop in `party-state.json` and are written on every
+change, so restarting the server — or closing the laptop lid — doesn't lose the
+night. Delete that file to start a fresh party.
+
+Everything still works with no server at all: opened from disk the board keeps
+using local storage exactly as before, and never looks for one.
 
 ## The tasks
 

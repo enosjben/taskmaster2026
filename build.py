@@ -14,6 +14,8 @@ import sys
 ROOT = pathlib.Path(__file__).parent
 TEMPLATE = ROOT / "src" / "index.template.html"
 OUTPUT = ROOT / "index.html"
+REMOTE_TEMPLATE = ROOT / "src" / "remote.template.html"
+REMOTE_OUTPUT = ROOT / "remote.html"
 # Artifact hosting supplies its own document skeleton, so that build gets the
 # stylesheet plus the body contents and nothing else. Not committed.
 FRAGMENT = ROOT / "dist" / "artifact.html"
@@ -27,21 +29,37 @@ FONTS = {
 }
 
 
-def main() -> int:
-    html = TEMPLATE.read_text(encoding="utf-8")
-
+def inline(html: str, source: str) -> str:
+    """Swap every asset token in one template for its data URI."""
     for token, relative in FONTS.items():
+        if token not in html:
+            continue                       # the remote uses only the fonts
         path = ROOT / relative
         if not path.exists():
-            print(f"missing font: {relative}", file=sys.stderr)
-            return 1
-        if token not in html:
-            print(f"template has no slot for {token}", file=sys.stderr)
-            return 1
+            raise FileNotFoundError(f"{source}: missing asset {relative}")
         html = html.replace(token, base64.b64encode(path.read_bytes()).decode("ascii"))
+    return html
+
+
+def main() -> int:
+    try:
+        html = inline(TEMPLATE.read_text(encoding="utf-8"), TEMPLATE.name)
+    except FileNotFoundError as exc:
+        print(exc, file=sys.stderr)
+        return 1
 
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"wrote {OUTPUT.name} ({OUTPUT.stat().st_size / 1024:.0f} KB)")
+
+    # The phone remote, served by server.py alongside the board.
+    if REMOTE_TEMPLATE.exists():
+        try:
+            remote = inline(REMOTE_TEMPLATE.read_text(encoding="utf-8"), REMOTE_TEMPLATE.name)
+        except FileNotFoundError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+        REMOTE_OUTPUT.write_text(remote, encoding="utf-8")
+        print(f"wrote {REMOTE_OUTPUT.name} ({REMOTE_OUTPUT.stat().st_size / 1024:.0f} KB)")
 
     style = re.search(r"<style>.*?</style>", html, re.S)
     body = re.search(r"<body>(.*)</body>", html, re.S)
