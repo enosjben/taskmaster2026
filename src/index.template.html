@@ -77,6 +77,7 @@ body{
 
 /* ── The sheet ────────────────────────────────────────────── */
 .sheet{
+  position:relative;
   max-width:1500px;
   margin:0 auto;
   background:
@@ -322,22 +323,6 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 }
 .roster:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
 
-.pips{ display:flex; gap:3px; }
-.pip{
-  flex:1 1 0;
-  height:5px;
-  background:rgba(0,0,0,.07);
-  position:relative;
-  overflow:hidden;
-}
-.pip i{
-  position:absolute; inset:0;
-  transform-origin:left center;
-  transform:scaleX(var(--fill, 0));
-  background:var(--tab);
-  transition:transform .4s cubic-bezier(.2,.7,.2,1);
-}
-
 .total-row{
   display:flex;
   align-items:baseline;
@@ -466,17 +451,6 @@ tbody tr:last-child td{ border-bottom:1px solid var(--rule); }
   white-space:nowrap;
   transform:rotate(-1.5deg);
 }
-.task-body{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-.task-brief{
-  margin:0;
-  font-family:var(--type);
-  font-size:clamp(10px, .92vw, 12.5px);
-  line-height:1.5;
-  color:var(--ink-soft);
-  max-width:52ch;
-}
-.task-brief.is-empty::before{ content:"add the task wording"; color:var(--pencil); opacity:.65; }
-.task-brief:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
 
 .score-td{ text-align:center; padding:7px 6px; }
 
@@ -581,6 +555,102 @@ tfoot td{ padding-top:14px; }
   margin-bottom:5px;
 }
 
+/* ── Big screen ───────────────────────────────────────────────
+   Built for a 1920x1080 TV: the whole board fits the viewport with
+   nothing to scroll. Everything is sized in vh so it holds at any
+   16:9 screen, and the grid takes whatever height is left over.
+   Narrow or short windows keep the scrolling layout above.
+   ───────────────────────────────────────────────────────────── */
+@media (min-width:1100px) and (min-height:620px){
+  html, body{ height:100%; }
+  body{ overflow:hidden; padding:1.3vh 1.1vw; }
+
+  .sheet{
+    max-width:none;
+    height:100%;
+    gap:1.2vh;
+    padding:1.7vh 1.6vw 1.3vh;
+  }
+
+  .envelope{ padding:1.4vh 2vw 5vh; }
+  h1{ font-size:6.6vh; letter-spacing:.05em; }
+  .tagline{ margin-top:.9vh; font-size:1.42vh; letter-spacing:.36em; }
+  .credits{ margin-top:.7vh; font-size:1.42vh; gap:2vw; }
+  .credit em{ font-size:1.15vh; }
+  .envelope::after{ bottom:2.6vh; }
+  .wax{ width:6.6vh; height:6.6vh; bottom:2.6vh; }
+  .wax span{ font-size:2.4vh; }
+
+  /* out of the vertical flow entirely — the board owns the height */
+  .controls{
+    position:absolute;
+    top:2.4vh;
+    right:2.4vw;
+    z-index:3;
+    margin:0;
+  }
+  .btn{ font-size:1.15vh; padding:.8vh 1vw; }
+
+  .standings{ flex:0 0 auto; gap:.85vw; }
+  .card{ padding:1.2vh .9vw; gap:.75vh; border-top-width:.55vh; }
+  .card-top{ min-height:3.6vh; }
+  .rank{ font-size:1.9vh; }
+  .trophy{ width:3.7vh; }
+  .team-name{ font-size:2.8vh; }
+  .roster{ font-size:1.45vh; min-height:1.5em; }
+  .total{ font-size:5.1vh; }
+  .total-unit{ font-size:1.2vh; }
+  .champion-stamp{ font-size:1.15vh; right:.8vw; bottom:1.2vh; }
+
+  /* the grid absorbs whatever height the rest leaves behind */
+  .matrix-section{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .matrix-head{ margin-bottom:.6vh; }
+  .section-label, .progress{ font-size:1.3vh; }
+    .scroller{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;   /* a safety valve, not the normal case */
+    display:flex;
+    flex-direction:column;
+  }
+  /* grows to fill the leftover height, so the nine rows space themselves
+     evenly down the screen instead of bunching at the top */
+  table{ flex:1 1 auto; height:auto; min-width:0; }
+
+  thead th{ padding-bottom:.9vh; }
+  .col-head{ font-size:1.85vh; }
+  .col-rule{ height:.32vh; margin-top:.7vh; }
+
+  .task-cell{ padding:.4vh 1.4vw .4vh 0; min-width:0; width:32%; }
+  .task-inner{ gap:.9vw; }
+  .task-num{ font-size:1.75vh; }
+  .task-name{ font-size:2.4vh; }
+  .task-flag{ font-size:1.1vh; padding:.2vh .5vw; }
+
+  .score-td{ padding:.3vh .3vw; }
+  .cell{ min-height:0; height:100%; font-size:3.1vh; }
+
+  tfoot td{ padding-top:.7vh; }
+  .foot-total{ font-size:2.4vh; }
+
+  /* one compact line: the rules guests care about, nothing else */
+  .legend{
+    flex:0 0 auto;
+    padding-top:.8vh;
+    gap:2.4vw;
+    font-size:1.3vh;
+    line-height:1.4;
+  }
+  .legend div{ max-width:none; }
+  .legend dt{ display:inline; margin:0 .5em 0 0; font-size:1.15vh; }
+  .legend-entry, .legend-editing, .legend-head{ display:none; }
+}
+
 @media (max-width:900px){
   .standings{ flex-wrap:wrap; }
   .card{ flex:1 1 45%; }
@@ -624,7 +694,7 @@ tfoot td{ padding-top:14px; }
       <span class="credit"><em>Taskmaster</em> <span id="taskmaster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the Taskmaster"></span></span>
       <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the assistant"></span></span>
     </p>
-    <div class="wax" aria-hidden="true"><span>TM</span></div>
+    <div class="wax"><span id="seal" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials">BE</span></div>
   </header>
 
   <div class="controls">
@@ -634,7 +704,7 @@ tfoot td{ padding-top:14px; }
 
   <section class="standings" id="standings" aria-label="Standings"></section>
 
-  <section aria-label="Task scoring">
+  <section class="matrix-section" aria-label="Task scoring">
     <div class="matrix-head">
       <h2 class="section-label">The Tasks</h2>
       <p class="progress"><span id="judged">0</span> of 9 tasks judged</p>
@@ -649,19 +719,19 @@ tfoot td{ padding-top:14px; }
   </section>
 
   <footer class="legend">
-    <div>
+    <div class="legend-scoring">
       <dt>Scoring</dt>
-      Five points to the team the Taskmaster likes best, down to one for the team he likes least. Zero is reserved for disqualification, and disqualification is always available.
+      Five points to the team the Taskmaster likes best, down to one for the team he likes least. Zero is disqualification.
     </div>
-    <div>
+    <div class="legend-entry">
       <dt>Entering scores</dt>
       Click any square and pick a number, or focus it and type 0&ndash;5. Backspace clears it. Arrow keys move around the grid.
     </div>
-    <div>
+    <div class="legend-editing">
       <dt>Editing</dt>
-      The title, the two names at the top, team names, player lists and every task&rsquo;s wording are editable &mdash; click and type. Everything saves to this browser automatically.
+      The title, the initials on the seal, the two names at the top, team names and player lists are editable &mdash; click and type. Everything saves to this browser automatically.
     </div>
-    <div>
+    <div class="legend-head">
       <dt>The golden head</dt>
       It sits with whoever leads, and moves the instant that changes. Whoever holds it after the relay keeps it.
     </div>
@@ -675,26 +745,16 @@ tfoot td{ padding-top:14px; }
 (function(){
   "use strict";
 
-  // Briefs are written to be read aloud, and are editable on the page.
   var TASKS = [
-    { name:"Longest Line",
-      brief:"Make the longest line. You may use anything you can carry, but nothing that is nailed down. Longest line wins." },
-    { name:"Coolest Phone Photo",
-      brief:"Show us the coolest photograph already on your phone. It must not have been taken tonight. Coolest photo wins." },
-    { name:"Recreate Phone Photo",
-      brief:"Recreate another team's photo using only the people and objects in this house. Most accurate recreation wins." },
-    { name:"Treasure Hunt",
-      brief:"Find the hidden treasure. It is somewhere you are allowed to go. First team back with it wins." },
-    { name:"Hit Song",
-      brief:"Write and perform a hit song. It must have a chorus and it must be a hit. Best hit wins." },
-    { name:"Museum Piece", flag:"Prize task",
-      brief:"Bring the item most deserving of its own museum. Points awarded entirely at the Taskmaster's whim." },
-    { name:"Painting",
-      brief:"Paint a masterpiece. It must be finished, framed and defensible. Best painting wins." },
-    { name:"Commercial",
-      brief:"Devise and perform an advert for an object in this room. Most persuasive advert wins." },
-    { name:"Relay", flag:"Finale",
-      brief:"Complete the relay. Every player must do exactly one leg. Fastest team wins. Your time starts now." }
+    { name:"Longest Line" },
+    { name:"Coolest Phone Photo" },
+    { name:"Recreate Phone Photo" },
+    { name:"Treasure Hunt" },
+    { name:"Hit Song" },
+    { name:"Museum Piece", flag:"Prize task" },
+    { name:"Painting" },
+    { name:"Commercial" },
+    { name:"Relay", flag:"Finale" }
   ];
 
   var TEAMS = [
@@ -717,10 +777,10 @@ tfoot td{ padding-top:14px; }
   function blank(){
     return {
       title:"Taskmaster",
+      seal:"BE",
       taskmaster:"",
       assistant:"",
       teams:TEAMS.map(function(t){ return { name:t.name, roster:"" }; }),
-      briefs:TASKS.map(function(t){ return t.brief; }),
       scores:emptyScores()
     };
   }
@@ -732,13 +792,9 @@ tfoot td{ padding-top:14px; }
       if(!raw) return fresh;
       var saved = JSON.parse(raw);
       if(typeof saved.title === "string") fresh.title = saved.title;
+      if(typeof saved.seal === "string" && saved.seal) fresh.seal = saved.seal;
       if(typeof saved.taskmaster === "string") fresh.taskmaster = saved.taskmaster;
       if(typeof saved.assistant === "string") fresh.assistant = saved.assistant;
-      if(Array.isArray(saved.briefs)){
-        saved.briefs.slice(0, NT).forEach(function(b, i){
-          if(typeof b === "string") fresh.briefs[i] = b;
-        });
-      }
       if(Array.isArray(saved.teams)){
         saved.teams.slice(0, NP).forEach(function(t, i){
           if(!t) return;
@@ -795,7 +851,6 @@ tfoot td{ padding-top:14px; }
       '</div>' +
       '<div class="team-name" contenteditable="true" spellcheck="false" role="textbox" aria-label="Team name"></div>' +
       '<div class="roster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Players"></div>' +
-      '<div class="pips">' + new Array(NT + 1).join('<span class="pip"><i></i></span>') + '</div>' +
       '<div class="total-row"><span class="total">0</span><span class="total-unit">pts</span></div>' +
       '<span class="champion-stamp">Champion</span>';
 
@@ -868,27 +923,8 @@ tfoot td{ padding-top:14px; }
       name.appendChild(flag);
     }
 
-    var brief = document.createElement("p");
-    brief.className = "task-brief";
-    brief.contentEditable = "true";
-    brief.spellcheck = false;
-    brief.setAttribute("role", "textbox");
-    brief.setAttribute("aria-label", task.name + " — task wording");
-    brief.textContent = state.briefs[r];
-    brief.classList.toggle("is-empty", !state.briefs[r]);
-    bindEditable(brief, function(text){
-      state.briefs[r] = text;
-      brief.classList.toggle("is-empty", !text);
-      save();
-    });
-
-    var bodyCol = document.createElement("div");
-    bodyCol.className = "task-body";
-    bodyCol.appendChild(name);
-    bodyCol.appendChild(brief);
-
     inner.appendChild(num);
-    inner.appendChild(bodyCol);
+    inner.appendChild(name);
     td.appendChild(inner);
     tr.appendChild(td);
 
@@ -1063,10 +1099,6 @@ tfoot td{ padding-top:14px; }
       card.classList.toggle("champion", judged === NT && totals[i] === leadScore);
       card.querySelector(".rank").textContent = anyScored ? ROMAN[ranks[i] - 1] : "—";
       card.querySelector(".total").textContent = totals[i];
-      var pips = card.querySelectorAll(".pip i");
-      state.scores.forEach(function(row, r){
-        pips[r].style.setProperty("--fill", row[i] === null ? 0 : (row[i] / 5).toFixed(2));
-      });
       footEls[i].textContent = totals[i];
     });
 
@@ -1099,6 +1131,10 @@ tfoot td{ padding-top:14px; }
   var titleEl = document.getElementById("title");
   titleEl.textContent = state.title;
   bindEditable(titleEl, function(text){ state.title = text; save(); });
+
+  var sealEl = document.getElementById("seal");
+  sealEl.textContent = state.seal;
+  bindEditable(sealEl, function(text){ state.seal = text; save(); });
 
   [["taskmaster", "taskmaster"], ["assistant", "assistant"]].forEach(function(pair){
     var el = document.getElementById(pair[0]);

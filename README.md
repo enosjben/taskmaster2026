@@ -9,14 +9,25 @@ Double-click `index.html`. That's it — no server, no build, no network. The
 page is entirely self-contained, fonts included, so it works offline and from
 a USB stick.
 
+## On the TV
+
+The board is laid out for a 1920×1080 screen: at that size the whole thing —
+masthead, standings and all nine tasks — fits the screen exactly, with nothing
+to scroll. Press **Full screen** to lose the browser chrome.
+
+Sizes are in viewport-height units rather than pixels, so the same layout holds
+on any 16:9 display, 1080p or 4K. Windows narrower than 1100px or shorter than
+620px fall back to a taller scrolling layout, which is what you get on a phone
+or a small laptop window.
+
 ## Using it during the party
 
 - **Award points** — click any square and pick a number, or focus a square and
   type `0`–`5`. Backspace clears it. Arrow keys move around the grid.
   Five points to the team the Taskmaster likes best, down to one for the team
   he likes least, and zero for disqualification.
-- **Edit anything** — the title, the Taskmaster and assistant names, team
-  names, player lists and each task's wording are all click-to-edit.
+- **Edit anything** — the title, the initials on the wax seal, the Taskmaster
+  and assistant names, team names and player lists are all click-to-edit.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
 - **Champion** is stamped on the leader only once all nine tasks are judged.
@@ -38,9 +49,6 @@ single laptop.
 7. Painting
 8. Commercial
 9. Relay — finale
-
-Each ships with default wording written to be read aloud. Edit it on the page
-to suit your house; edits persist.
 
 ## Changing the tasks or teams
 
