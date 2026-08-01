@@ -15,6 +15,11 @@ The board is laid out for a 1920×1080 screen: at that size the whole thing —
 masthead, standings and all nine tasks — fits the screen exactly, with nothing
 to scroll. Press **Full screen** to lose the browser chrome.
 
+That button only works when the page is opened directly. An embedded copy is
+refused the Fullscreen API by its host frame, so the button detects that on
+load and names your browser's own full-screen key instead — `F11`, or
+`Ctrl+Cmd+F` on a Mac. Open `index.html` from disk for the real thing.
+
 Sizes are in viewport-height units rather than pixels, so the same layout holds
 on any 16:9 display, 1080p or 4K. Windows narrower than 1100px or shorter than
 620px fall back to a taller scrolling layout, which is what you get on a phone

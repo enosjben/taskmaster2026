@@ -1086,11 +1086,40 @@ tfoot td{ padding-top:14px; }
   sealEl.textContent = state.seal;
   bindEditable(sealEl, function(text){ state.seal = text; save(); });
 
-  document.getElementById("fullscreen").addEventListener("click", function(){
-    try{
-      if(document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
-    }catch(e){}
+  // An embedded page is refused the Fullscreen API outright, and the request
+  // rejects asynchronously, so a try/catch never sees it. Detect that up front
+  // and name the key that does work instead of offering a dead button.
+  var fsBtn = document.getElementById("fullscreen");
+  var isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+  var FS_KEY = isMac ? "\u2303\u2318F" : "F11";
+  var fsTimer = null;
+
+  function fullscreenHint(){
+    clearTimeout(fsTimer);
+    fsBtn.textContent = "Press " + FS_KEY;
+    fsBtn.title = "This page cannot request full screen where it is embedded. "
+                + "Use your browser's own full-screen key.";
+    fsTimer = setTimeout(function(){
+      if(document.fullscreenEnabled) fsBtn.textContent = "Full screen";
+    }, 4000);
+  }
+
+  if(!document.fullscreenEnabled) fullscreenHint();
+
+  fsBtn.addEventListener("click", function(){
+    if(document.fullscreenElement){
+      document.exitFullscreen();
+      return;
+    }
+    var el = document.documentElement;
+    var request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(!document.fullscreenEnabled || !request){
+      fullscreenHint();
+      return;
+    }
+    var result;
+    try{ result = request.call(el); }catch(e){ fullscreenHint(); return; }
+    Promise.resolve(result).catch(fullscreenHint);
   });
 
   // A sandboxed page cannot open a modal: window.confirm is suppressed and
