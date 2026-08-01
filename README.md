@@ -30,8 +30,8 @@ or a small laptop window.
   picker runs 0–15, and typing works by combining digits pressed in quick
   succession, so `1` then `5` gives 15. Any other task refuses anything above
   its own maximum.
-- **Edit anything** — the title, the initials on the wax seal, the Taskmaster
-  and assistant names, team names and player lists are all click-to-edit.
+- **Edit anything** — the title, the initials on the wax seal, team names and
+  player lists are all click-to-edit.
 - **The golden head** sits with whoever is leading and moves the moment that
   changes. The cards re-sort themselves as scores land.
 - **Champion** is stamped on the leader only once all nine tasks are judged.
