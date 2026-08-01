@@ -13,14 +13,9 @@
   src:url(data:font/woff2;base64,__BEVAN_400__) format("woff2");
 }
 @font-face{
-  font-family:"Courier Prime";
+  font-family:"Veteran Typewriter";
   font-style:normal; font-weight:400; font-display:block;
-  src:url(data:font/woff2;base64,__COURIER_400__) format("woff2");
-}
-@font-face{
-  font-family:"Courier Prime";
-  font-style:normal; font-weight:700; font-display:block;
-  src:url(data:font/woff2;base64,__COURIER_700__) format("woff2");
+  src:url(data:font/woff2;base64,__VETERAN__) format("woff2");
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -51,7 +46,7 @@
   --pur-tab:    #8C55A8;  --pur-ink:    #6A3D85;
 
   --slab: "Bevan", Rockwell, Clarendon, "Bookman Old Style", Georgia, serif;
-  --type: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --type: "Veteran Typewriter", "Courier New", ui-monospace, monospace;
 
   --gap: clamp(12px, 1.4vw, 22px);
 }
@@ -130,15 +125,28 @@ h1{
 h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 
 .credits{
-  margin:clamp(8px, 1vw, 12px) 0 0;
+  position:absolute;
+  left:0; right:0;
+  bottom:clamp(28px, 3.4vw, 44px);
+  transform:translateY(50%);
+  margin:0;
   display:flex;
-  gap:clamp(14px, 2.4vw, 34px);
+  align-items:center;
   justify-content:center;
-  flex-wrap:wrap;
+  gap:clamp(10px, 1.6vw, 24px);
   font-size:clamp(10px, 1vw, 12.5px);
   color:var(--ink-soft);
+  z-index:2;
 }
-.credit{ display:inline-flex; align-items:baseline; gap:8px; }
+/* the flap tint behind each credit, so the crease does not run through
+   the names the way it runs behind the rest of the envelope */
+.credit{
+  display:inline-flex;
+  align-items:baseline;
+  gap:8px;
+  padding:2px clamp(6px, .9vw, 12px);
+  background:#F1EADC;
+}
 .credit em{
   font-style:normal;
   font-weight:700;
@@ -157,12 +165,11 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 
 /* ── Wax seal ─────────────────────────────────────────────── */
 .wax{
-  position:absolute;
-  left:50%;
-  bottom:clamp(28px, 3.4vw, 44px);
+  position:relative;
+  flex:0 0 auto;
   width:clamp(66px, 7.4vw, 104px);
   height:clamp(66px, 7.4vw, 104px);
-  transform:translate(-50%, 50%) rotate(-3deg);
+  transform:rotate(-3deg);
   display:grid;
   place-items:center;
   /* pressed wax, not a bauble: flat centre, thickened irregular rim */
@@ -176,12 +183,25 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
     0 1px 2px rgba(0,0,0,.28),
     inset 0 2px 5px rgba(255,150,140,.28),
     inset 0 -4px 9px rgba(96,12,8,.45);
-  z-index:2;
+}
+/* the die's dividing rule, pressed between the two initials */
+.wax::before{
+  content:"";
+  position:absolute;
+  top:17%;
+  bottom:17%;
+  left:50%;
+  width:2px;
+  transform:translateX(-50%);
+  background:#7A130E;
+  box-shadow:1px 0 0 rgba(255,158,146,.34), -1px 0 0 rgba(72,6,3,.4);
+  border-radius:1px;
 }
 .wax span{
   font-family:var(--slab);
   font-size:clamp(20px, 2.3vw, 32px);
-  letter-spacing:.02em;
+  letter-spacing:.42em;
+  text-indent:.42em;
   color:#7A130E;
   /* embossed: light catches the top edge, shadow falls below */
   text-shadow:0 -1px 0 rgba(72,6,3,.75), 0 1px 0 rgba(255,158,146,.5);
@@ -533,11 +553,11 @@ tfoot td{ padding-top:14px; }
 
   .envelope{ padding:1.4vh 2vw 5vh; }
   h1{ font-size:6.6vh; letter-spacing:.05em; }
-  .credits{ margin-top:1.4vh; font-size:1.42vh; gap:2vw; }
+  .credits{ bottom:2.6vh; font-size:1.42vh; gap:1.2vw; }
   .credit em{ font-size:1.15vh; }
   .envelope::after{ bottom:2.6vh; }
-  .wax{ width:6.6vh; height:6.6vh; bottom:2.6vh; }
-  .wax span{ font-size:2.4vh; }
+  .wax{ width:7.6vh; height:7.6vh; }
+  .wax span{ font-size:2.1vh; }
 
   /* out of the vertical flow entirely — the board owns the height */
   .controls{
@@ -634,11 +654,11 @@ tfoot td{ padding-top:14px; }
 
   <header class="envelope">
     <h1 id="title" contenteditable="true" spellcheck="false">Taskmaster</h1>
-    <p class="credits">
+    <div class="credits">
       <span class="credit"><em>Taskmaster</em> <span id="taskmaster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the Taskmaster"></span></span>
-      <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Who is the assistant"></span></span>
-    </p>
-    <div class="wax"><span id="seal" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials">BE</span></div>
+      <span class="wax"><span id="seal" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials">BE</span></span>
+      <span class="credit"><em>Assistant</em> <span id="assistant" contenteditable="true" spellcheck="false" role="textbox" aria-label="Seal initials"></span></span>
+    </div>
   </header>
 
   <div class="controls">
@@ -902,7 +922,7 @@ tfoot td{ padding-top:14px; }
   var clearBtn = document.createElement("button");
   clearBtn.type = "button";
   clearBtn.className = "clear";
-  clearBtn.textContent = "—";
+  clearBtn.textContent = "\u00D7";
   clearBtn.title = "Clear";
   clearBtn.addEventListener("click", function(){ commit(null); });
   pop.appendChild(clearBtn);

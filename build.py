@@ -20,8 +20,7 @@ FRAGMENT = ROOT / "dist" / "artifact.html"
 
 FONTS = {
     "__BEVAN_400__": "fonts/bevan-400.woff2",
-    "__COURIER_400__": "fonts/courier-prime-400.woff2",
-    "__COURIER_700__": "fonts/courier-prime-700.woff2",
+    "__VETERAN__": "fonts/veteran-typewriter.woff2",
 }
 
 
