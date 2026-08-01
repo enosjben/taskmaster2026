@@ -722,6 +722,7 @@ tfoot td{ padding-top:14px; }
 
   <div class="controls">
     <button class="btn" id="fullscreen" type="button">Full screen</button>
+    <button class="btn" id="sound" type="button">Sound on</button>
     <button class="btn danger" id="reset" type="button">Reset scores</button>
     <span class="link" id="link" hidden>Remote linked</span>
   </div>
@@ -746,6 +747,9 @@ tfoot td{ padding-top:14px; }
 </div>
 
 <div class="pop-menu" id="pop" role="menu" aria-label="Award points"></div>
+
+<!-- Played when a round lands. Inlined so the page stays self-contained. -->
+<audio id="sting" preload="auto" src="data:audio/mpeg;base64,__STING__"></audio>
 
 <script>
 (function(){
@@ -1321,6 +1325,71 @@ tfoot td{ padding-top:14px; }
     if(ev.key === "Escape") disarmReset();
   });
 
+  /* ── The sound of a round landing ───────────────────────── */
+  var audio = {
+    on: true,
+    unlocked: false,
+    el: document.getElementById("sting"),
+    btn: document.getElementById("sound"),
+    hintTimer: null
+  };
+
+  try{
+    if(localStorage.getItem("taskmaster-sound") === "off") audio.on = false;
+  }catch(e){}
+
+  if(audio.el) audio.el.volume = 0.9;
+
+  function labelSound(){
+    audio.btn.textContent = audio.on ? "Sound on" : "Sound off";
+  }
+  labelSound();
+
+  function soundHint(){
+    audio.btn.textContent = "Click for sound";
+    clearTimeout(audio.hintTimer);
+    audio.hintTimer = setTimeout(labelSound, 4000);
+  }
+
+  // Browsers refuse to play until the page has been interacted with. A silent
+  // play/pause inside the first gesture is enough to earn the right.
+  function unlockAudio(){
+    if(!audio.el || audio.unlocked) return;
+    var wasMuted = audio.el.muted;
+    audio.el.muted = true;
+    var attempt;
+    try{ attempt = audio.el.play(); }catch(e){ audio.el.muted = wasMuted; return; }
+    var settle = function(){
+      audio.el.pause();
+      audio.el.currentTime = 0;
+      audio.el.muted = wasMuted;
+      audio.unlocked = true;
+    };
+    if(attempt && attempt.then) attempt.then(settle, function(){ audio.el.muted = wasMuted; });
+    else settle();
+  }
+
+  document.addEventListener("click", unlockAudio, { capture:true, once:true });
+  document.addEventListener("keydown", unlockAudio, { capture:true, once:true });
+
+  audio.btn.addEventListener("click", function(){
+    audio.on = !audio.on;
+    labelSound();
+    try{ localStorage.setItem("taskmaster-sound", audio.on ? "on" : "off"); }catch(e){}
+    unlockAudio();
+    if(audio.on) playStamp();          // so you can set the volume before guests arrive
+    else if(audio.el) audio.el.pause();
+  });
+
+  function playStamp(){
+    if(!audio.on || !audio.el) return;
+    try{
+      audio.el.currentTime = 0;
+      var played = audio.el.play();
+      if(played && played.catch) played.catch(soundHint);
+    }catch(e){ soundHint(); }
+  }
+
   /* ── Live sync with the phone remote ────────────────────── */
   var linkEl = document.getElementById("link");
 
@@ -1364,6 +1433,8 @@ tfoot td{ padding-top:14px; }
         btn.classList.add("stamped");
       });
     }
+    // One sound for the round, however many scores it carried.
+    if(landed.length) playStamp();
   }
 
   // Never overwrite a field somebody on this machine is part-way through typing.

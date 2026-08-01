@@ -72,6 +72,14 @@ appearing one team at a time as you tap. Submit stays disabled until all five
 teams have a score, so a half-finished round can't go up by accident, and after
 a successful submit the phone moves itself to the next unjudged task.
 
+A sting plays on the laptop each time a round lands, so the room hears the
+scores arrive. **Sound on / Sound off** toggles it and the choice is
+remembered. Browsers keep audio locked until the page has been clicked, so
+press the button once before guests arrive — it plays the sting so you can set
+the volume. If a round lands while audio is still locked, the button says
+**Click for sound** rather than just being quiet. Only rounds submitted from
+the phone make a noise; typing scores on the laptop stays silent.
+
 It works both ways: rename a team or type a score on the laptop and the phone
 updates too. A small **Remote linked** marker appears on the board while a
 server is attached. If the phone loses wifi it says so rather than silently
@@ -145,6 +153,13 @@ updated together with the raster size.
 
 To use a different frame, drop your own square PNG at `assets/frame.png`, set
 the slice to its border thickness in pixels, and rebuild.
+
+## The sting
+
+`assets/sting.mp3` is played when a round lands, inlined as a data URI like
+everything else. Swap that file and rebuild to change it. It is the one asset
+here that isn't original work — keep that in mind before making the repository
+public.
 
 ## Fonts
 
