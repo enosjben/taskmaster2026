@@ -923,7 +923,9 @@ tfoot td{ padding-top:14px; }
         saved.teams.slice(0, NP).forEach(function(t, i){
           if(!t) return;
           if(typeof t.name === "string" && t.name !== LEGACY_NAMES[i]) fresh.teams[i].name = t.name;
-          if(typeof t.roster === "string") fresh.teams[i].roster = t.roster;
+          // An empty stored roster means nobody ever filled one in, so it must
+          // not wipe the squad the page ships with.
+          if(typeof t.roster === "string" && t.roster.trim()) fresh.teams[i].roster = t.roster;
         });
       }
       if(Array.isArray(saved.scores)){

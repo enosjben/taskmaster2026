@@ -73,9 +73,12 @@ def load_state():
             if isinstance(saved.get("teams"), list):
                 for i, t in enumerate(saved["teams"][: len(TEAMS)]):
                     if isinstance(t, dict):
-                        state["teams"][i].update(
-                            {k: t[k] for k in ("name", "roster") if isinstance(t.get(k), str)}
-                        )
+                        if isinstance(t.get("name"), str) and t["name"].strip():
+                            state["teams"][i]["name"] = t["name"]
+                        # An empty stored roster means nobody filled one in, so
+                        # it must not wipe the squad the server ships with.
+                        if isinstance(t.get("roster"), str) and t["roster"].strip():
+                            state["teams"][i]["roster"] = t["roster"]
             if isinstance(saved.get("scores"), list):
                 for r, row in enumerate(saved["scores"][: len(TASKS)]):
                     if isinstance(row, list):
