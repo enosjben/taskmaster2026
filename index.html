@@ -244,7 +244,8 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
 .card-top{
   display:flex;
   align-items:center;
-  justify-content:flex-end;
+  justify-content:space-between;
+  gap:8px;
   min-height:clamp(28px, 3vw, 40px);
 }
 
@@ -288,6 +289,7 @@ h1:focus-visible{ outline:2px solid var(--wax); outline-offset:8px; }
   text-transform:uppercase;
   color:var(--tint);
   word-break:break-word;
+  min-width:0;
 }
 .team-name:focus-visible{ outline:2px solid var(--wax); outline-offset:3px; }
 
@@ -553,7 +555,7 @@ tfoot td{ padding-top:14px; }
   .card{ padding:1.1vh .8vw; gap:.6vh; border-width:2.3vh; }
   .card-top{ min-height:3.6vh; }
   .trophy{ width:3.7vh; }
-  .team-name{ font-size:2.8vh; }
+  .team-name{ font-size:2.1vh; }
   .roster{ font-size:1.45vh; min-height:1.5em; }
   .total{ font-size:5.1vh; }
   .total-unit{ font-size:1.2vh; }
@@ -682,12 +684,16 @@ tfoot td{ padding-top:14px; }
   ];
 
   var TEAMS = [
-    { name:"Red",    tab:"var(--red-tab)", tint:"var(--red-ink)" },
-    { name:"Yellow", tab:"var(--yel-tab)", tint:"var(--yel-ink)" },
-    { name:"Green",  tab:"var(--grn-tab)", tint:"var(--grn-ink)" },
-    { name:"Blue",   tab:"var(--blu-tab)", tint:"var(--blu-ink)" },
-    { name:"Purple", tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
+    { name:"Red Team",    tab:"var(--red-tab)", tint:"var(--red-ink)" },
+    { name:"Yellow Team", tab:"var(--yel-tab)", tint:"var(--yel-ink)" },
+    { name:"Green Team",  tab:"var(--grn-tab)", tint:"var(--grn-ink)" },
+    { name:"Blue Team",   tab:"var(--blu-tab)", tint:"var(--blu-ink)" },
+    { name:"Purple Team", tab:"var(--pur-tab)", tint:"var(--pur-ink)" }
   ];
+
+  // Names saved before "Team" was appended are treated as untouched defaults,
+  // so an earlier session's storage does not pin the old wording.
+  var LEGACY_NAMES = ["Red", "Yellow", "Green", "Blue", "Purple"];
 
   var NT = TASKS.length, NP = TEAMS.length;
   var KEY = "taskmaster-scoreboard-v1";
@@ -717,7 +723,7 @@ tfoot td{ padding-top:14px; }
       if(Array.isArray(saved.teams)){
         saved.teams.slice(0, NP).forEach(function(t, i){
           if(!t) return;
-          if(typeof t.name === "string") fresh.teams[i].name = t.name;
+          if(typeof t.name === "string" && t.name !== LEGACY_NAMES[i]) fresh.teams[i].name = t.name;
           if(typeof t.roster === "string") fresh.teams[i].roster = t.roster;
         });
       }
@@ -766,9 +772,9 @@ tfoot td{ padding-top:14px; }
     card.style.setProperty("--tint", team.tint);
     card.innerHTML =
       '<div class="card-top">' +
+        '<div class="team-name" contenteditable="true" spellcheck="false" role="textbox" aria-label="Team name"></div>' +
         '<svg class="trophy" viewBox="0 0 24 30" role="img" aria-label="Holds the golden head"><use href="#golden-head"/></svg>' +
       '</div>' +
-      '<div class="team-name" contenteditable="true" spellcheck="false" role="textbox" aria-label="Team name"></div>' +
       '<div class="roster" contenteditable="true" spellcheck="false" role="textbox" aria-label="Players"></div>' +
       '<div class="total-row"><span class="total">0</span><span class="total-unit">pts</span></div>' +
       '<span class="champion-stamp">Champion</span>';
