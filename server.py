@@ -159,11 +159,28 @@ def reset_scores():
         broadcast()
 
 
+class QuietServer(ThreadingHTTPServer):
+    """A browser hanging up is routine here, not something to report."""
+
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
+            return
+        super().handle_error(request, client_address)
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt, *args):
         pass                                            # keep the console quiet
+
+    def handle_one_request(self):
+        # Editing a name streams updates, and the browser drops keep-alive
+        # sockets as it goes. Each drop would otherwise print a traceback.
+        try:
+            super().handle_one_request()
+        except (ConnectionError, TimeoutError):
+            self.close_connection = True
 
     # ── helpers ──────────────────────────────────────────────
     def _send(self, code, body=b"", ctype="text/plain; charset=utf-8", extra=None):
@@ -281,7 +298,7 @@ def lan_addresses():
 
 
 def main():
-    server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    server = QuietServer(("0.0.0.0", PORT), Handler)
     server.daemon_threads = True
 
     hosts = lan_addresses()

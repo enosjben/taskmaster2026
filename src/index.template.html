@@ -973,7 +973,7 @@ tfoot td{ padding-top:14px; }
       .then(function(r){ return r.json(); })
       .then(function(res){ sync.ownRev = res.rev; })
       .catch(function(){});
-    }, 120);
+    }, 350);        // settle between keystrokes rather than posting each one
   }
 
   var state = load();
